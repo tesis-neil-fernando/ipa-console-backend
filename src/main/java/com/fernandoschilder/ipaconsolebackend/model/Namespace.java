@@ -22,6 +22,6 @@ public class Namespace {
     @ManyToMany(mappedBy = "permission_namespaces")
     private Set<Permission> permissions;
 
-    @OneToMany(mappedBy = "namespace_id")
+    @OneToMany(mappedBy = "namespace")
     private Set<Process> processes;
 }
