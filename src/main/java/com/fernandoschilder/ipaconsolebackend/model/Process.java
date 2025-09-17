@@ -3,6 +3,8 @@ package com.fernandoschilder.ipaconsolebackend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import javax.naming.Name;
+
 @Data
 @RequiredArgsConstructor
 @NoArgsConstructor
@@ -13,6 +15,9 @@ public class Process {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "process_id")
     private Long id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "namespace_id")
+    private Namespace namespace;
     @NonNull
     @Column(name = "name")
     private String name;
