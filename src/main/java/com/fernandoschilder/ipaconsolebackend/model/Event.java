@@ -20,7 +20,7 @@ public class Event {
     @Temporal(TemporalType.TIMESTAMP)
     private Date time;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "process_id")
+    @JoinColumn(name = "process_id", nullable = false)
     private Process process;
     @NonNull
     @Column(name = "type")
