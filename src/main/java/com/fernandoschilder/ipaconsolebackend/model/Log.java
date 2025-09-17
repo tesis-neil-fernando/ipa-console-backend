@@ -19,14 +19,16 @@ public class Log {
     @Column(name = "time")
     private Instant time;
     @NonNull
-    @Column(name = "process_id")
-    private Long process_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "process_id", nullable = false)
+    private Process process;
     @NonNull
     @Column(name = "initiator")
     private String initiator;
     @NonNull
     @Column(name = "state")
     private String state;
-    @Column(name = "user_id")
-    private Long user_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 }
