@@ -19,9 +19,9 @@ public class Event {
     @Column(name = "time")
     @Temporal(TemporalType.TIMESTAMP)
     private Date time;
-    @NonNull
-    @Column(name = "process_id")
-    private Long process_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "process_id")
+    private Process process;
     @NonNull
     @Column(name = "type")
     private String type;
