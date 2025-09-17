@@ -22,6 +22,10 @@ public class User {
     @Column(name = "password")
     private String password;
 
+    @NonNull
+    @Column(name = "enabled")
+    private boolean enabled;
+
     @ManyToMany
     @JoinTable(
             name = "user_roles",
