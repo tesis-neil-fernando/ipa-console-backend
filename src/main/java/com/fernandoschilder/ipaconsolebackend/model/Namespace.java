@@ -3,6 +3,8 @@ package com.fernandoschilder.ipaconsolebackend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Set;
+
 @Data
 @RequiredArgsConstructor
 @NoArgsConstructor
@@ -16,4 +18,7 @@ public class Namespace {
     @NonNull
     @Column(name = "name")
     private String name;
+
+    @ManyToMany(mappedBy = "permission_namespaces")
+    private Set<Permission> permissions;
 }

@@ -22,4 +22,9 @@ public class Permission {
     @ManyToMany(mappedBy = "role_permissions")
     private Set<Role> roles;
 
+    @ManyToMany
+    @JoinTable(name="permission_namespaces",
+    joinColumns = @JoinColumn(name = "namespaces_id"),
+    inverseJoinColumns = @JoinColumn(name = "permission_id"))
+    private Set<Namespace> permission_namespaces;
 }
