@@ -3,6 +3,8 @@ package com.fernandoschilder.ipaconsolebackend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Set;
+
 @Data
 @RequiredArgsConstructor
 @NoArgsConstructor
@@ -19,4 +21,7 @@ public class Role {
     @NonNull
     @Column(name = "description")
     private String description;
+
+    @ManyToMany(mappedBy = "user_roles")
+    Set<User> users;
 }
