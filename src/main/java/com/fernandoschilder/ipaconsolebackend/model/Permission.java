@@ -3,6 +3,8 @@ package com.fernandoschilder.ipaconsolebackend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Set;
+
 @Data
 @RequiredArgsConstructor
 @NoArgsConstructor
@@ -16,4 +18,8 @@ public class Permission {
     @NonNull
     @Column(name = "type")
     private String type;
+
+    @ManyToMany(mappedBy = "role_permissions")
+    private Set<Role> roles;
+
 }
