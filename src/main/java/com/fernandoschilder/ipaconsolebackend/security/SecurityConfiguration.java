@@ -35,7 +35,7 @@ public class SecurityConfiguration {
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
 
-    private static final String[] WHITE_LIST_URL = {  "swagger-ui/**", "/v3/**", "/signin", "/signup", "/user-dashboard" };
+    private static final String[] WHITE_LIST_URL = {  "swagger-ui/**", "/v3/**", "/auth/**", "/user-dashboard" };
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {

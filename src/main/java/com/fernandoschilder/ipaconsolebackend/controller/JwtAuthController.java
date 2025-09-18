@@ -7,6 +7,7 @@ import com.fernandoschilder.ipaconsolebackend.utils.JwtUtils;
 import com.fernandoschilder.ipaconsolebackend.model.LoginRequest;
 import com.fernandoschilder.ipaconsolebackend.model.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,10 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.fernandoschilder.ipaconsolebackend.model.User;
 import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
@@ -25,6 +23,7 @@ import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
+@RequestMapping("/auth")
 public class JwtAuthController {
 
     @Autowired
@@ -71,10 +70,12 @@ public class JwtAuthController {
 
     }
 
-    @RequestMapping("/user-dashboard")
-    @PreAuthorize("isAuthenticated()")
-    public String dashboard() {
-        return "My Dashboard";
+    @GetMapping("/valid")
+    public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring("Bearer ".length());
+        if (jwtUtils.validateJwtToken(token)) {
+            return ResponseEntity.ok().body(true);
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
     }
-
 }
