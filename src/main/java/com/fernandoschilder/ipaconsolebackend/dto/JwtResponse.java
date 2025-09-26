@@ -1,4 +1,4 @@
-package com.fernandoschilder.ipaconsolebackend.model;
+package com.fernandoschilder.ipaconsolebackend.dto;
 
 import lombok.Getter;
 import lombok.Setter;

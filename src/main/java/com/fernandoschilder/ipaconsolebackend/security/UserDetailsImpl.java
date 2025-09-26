@@ -1,8 +1,9 @@
-package com.fernandoschilder.ipaconsolebackend.model;
+package com.fernandoschilder.ipaconsolebackend.security;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import com.fernandoschilder.ipaconsolebackend.model.User;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

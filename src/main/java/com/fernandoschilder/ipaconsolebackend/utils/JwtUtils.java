@@ -4,7 +4,7 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
-import com.fernandoschilder.ipaconsolebackend.model.UserDetailsImpl;
+import com.fernandoschilder.ipaconsolebackend.security.UserDetailsImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

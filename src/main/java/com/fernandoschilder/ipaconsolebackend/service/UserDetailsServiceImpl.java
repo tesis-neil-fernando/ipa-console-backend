@@ -1,6 +1,6 @@
 package com.fernandoschilder.ipaconsolebackend.service;
 
-import com.fernandoschilder.ipaconsolebackend.model.UserDetailsImpl;
+import com.fernandoschilder.ipaconsolebackend.security.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

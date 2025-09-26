@@ -2,14 +2,13 @@ package com.fernandoschilder.ipaconsolebackend.controller;
 
 import java.io.UnsupportedEncodingException;
 
-import com.fernandoschilder.ipaconsolebackend.model.JwtResponse;
+import com.fernandoschilder.ipaconsolebackend.dto.JwtResponse;
 import com.fernandoschilder.ipaconsolebackend.utils.JwtUtils;
-import com.fernandoschilder.ipaconsolebackend.model.LoginRequest;
-import com.fernandoschilder.ipaconsolebackend.model.UserDetailsImpl;
+import com.fernandoschilder.ipaconsolebackend.dto.LoginRequest;
+import com.fernandoschilder.ipaconsolebackend.security.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
