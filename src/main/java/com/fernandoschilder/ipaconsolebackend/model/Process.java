@@ -3,7 +3,8 @@ package com.fernandoschilder.ipaconsolebackend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import javax.naming.Name;
+
+import java.util.Set;
 
 @Data
 @RequiredArgsConstructor
@@ -24,4 +25,6 @@ public class Process {
     @NonNull
     @Column(name = "description")
     private String description;
+    @OneToMany(mappedBy = "process")
+    private Set<Parameter> parameters;
 }
