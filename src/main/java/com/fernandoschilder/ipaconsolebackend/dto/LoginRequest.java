@@ -1,9 +1,10 @@
 package com.fernandoschilder.ipaconsolebackend.dto;
 
-import lombok.Data;
+import lombok.*;
 
-@Data
-public class UserDto {
+@Getter @Setter
+public class LoginRequest {
+
     private String username;
     private String password;
 }

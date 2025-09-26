@@ -1,6 +1,5 @@
 package com.fernandoschilder.ipaconsolebackend.service;
 
-import com.fernandoschilder.ipaconsolebackend.dto.UserDto;
 import com.fernandoschilder.ipaconsolebackend.model.User;
 import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,10 +11,7 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    public User createUser(UserDto userDto) {
-        User user = new User();
-        user.setUsername(userDto.getUsername());
-        user.setPassword(userDto.getPassword());
+    public User createUser(User user) {
         return userRepository.save(user);
     }
 

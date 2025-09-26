@@ -1,0 +1,80 @@
+package com.fernandoschilder.ipaconsolebackend.controller;
+
+import java.io.UnsupportedEncodingException;
+
+import com.fernandoschilder.ipaconsolebackend.dto.JwtResponse;
+import com.fernandoschilder.ipaconsolebackend.utils.JwtUtils;
+import com.fernandoschilder.ipaconsolebackend.dto.LoginRequest;
+import com.fernandoschilder.ipaconsolebackend.security.UserDetailsImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import com.fernandoschilder.ipaconsolebackend.model.User;
+import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+@RestController
+@RequestMapping("/auth")
+public class JwtAuthController {
+
+    @Autowired
+    AuthenticationManager authenticationManager;
+
+    @Autowired
+    PasswordEncoder encoder;
+
+    @Autowired
+    JwtUtils jwtUtils;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @PostMapping("/signup")
+    public ResponseEntity<?> registerUser(@RequestBody User signUpRequest, HttpServletRequest request) throws UnsupportedEncodingException {
+
+        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+            return ResponseEntity.badRequest()
+                    .body("Error: Username is already taken!");
+        }
+        User user = new User();
+        user.setUsername(signUpRequest.getUsername());
+        user.setPassword(encoder.encode(signUpRequest.getPassword()));
+        user.setEnabled(true);
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/signin")
+    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(authentication);
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        String jwt = jwtUtils.generateJwtToken(authentication);
+
+        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getUsername()));
+
+    }
+
+    @GetMapping("/valid")
+    public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring("Bearer ".length());
+        if (jwtUtils.validateJwtToken(token)) {
+            return ResponseEntity.ok().body(true);
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+    }
+}
