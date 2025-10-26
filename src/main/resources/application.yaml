@@ -8,7 +8,9 @@ spring:
     # password: ${PG_PASSWORD}
 fernandoschilder:
   app:
-    jwtSecret: aSKmSZt62uM1hiyjxxqc6aXuu3LNGmAmZVmNzy0pjIQMb7AQVizlDPFmKqPQZVcm4njlNNLYkiXEAWFqCv2fvNFu1smqNzmTM6f0XiMhaFuwNo4ZxRHOVo87BptMrpnM83CpiY9pEGpPeTbG6reBtzBop0qLGhkSMam8CJM5mRlFW18M8BKO0zD4CmfMGhFUX86LhB7iWXoYto40MIitIAHwByMNznrILlVmczDNZoGStHsGxJLXpyE5kldZVO6A
+    jwtSecret: ${JWT_SECRET}
     jwtExpirationMs: 7200000
     n8n-url: ${N8N_URL}
     n8n-apikey: ${N8N_API_KEY}
+    cron:
+      retrieve-logs: "*/10 * * * * *"
