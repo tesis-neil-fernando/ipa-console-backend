@@ -20,7 +20,7 @@ public class StartupInitializerDev implements CommandLineRunner {
     public void run(String... args) throws Exception {
         User user = new User();
         user.setUsername("fschilder");
-        user.setPassword("Password123");
+        user.setPassword("May2letter#");
         if (!userRepository.existsByUsername(user.getUsername())) {
             user.setUsername(user.getUsername());
             user.setPassword(encoder.encode(user.getPassword()));
