@@ -11,4 +11,4 @@ fernandoschilder:
     n8n-url: ${N8N_URL}
     n8n-apikey: ${N8N_API_KEY}
     cron:
-      retrieve-logs: "*/10 * * * * *"
+      retrieve-logs: "0 */5 * * * *"
