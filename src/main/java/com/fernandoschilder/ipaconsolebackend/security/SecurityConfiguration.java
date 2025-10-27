@@ -4,6 +4,7 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 
 import com.fernandoschilder.ipaconsolebackend.utils.AuthTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -36,6 +37,9 @@ public class SecurityConfiguration {
     private AuthEntryPointJwt unauthorizedHandler;
 
     private static final String[] WHITE_LIST_URL = {  "swagger-ui/**", "/v3/**", "/auth/**", "/user-dashboard" };
+
+    @Value("${fernandoschilder.app.front-url}")
+    private String frontUrl;
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
@@ -82,7 +86,7 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:4200"));
+        corsConfiguration.setAllowedOrigins(List.of(frontUrl));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         corsConfiguration.setAllowCredentials(true);

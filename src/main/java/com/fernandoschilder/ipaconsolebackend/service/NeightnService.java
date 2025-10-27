@@ -1,20 +1,45 @@
 package com.fernandoschilder.ipaconsolebackend.service;
 
+import com.fernandoschilder.ipaconsolebackend.dto.WorkflowDto;
+import com.fernandoschilder.ipaconsolebackend.dto.WorkflowsResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 
 @Service
 public class NeightnService {
-
-    private WebClient webClient;
+    private final WebClient webClient;
 
     public NeightnService(WebClient webClient) {
         this.webClient = webClient;
     }
-    public Mono<String> getWorkflows() {
-        return webClient.get().uri("/api/v1/workflows").retrieve().bodyToMono(String.class);
+
+    public WorkflowsResponse getWorkflowsPage(String cursor) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/v1/workflows")
+                        .queryParamIfPresent("cursor", cursor == null ? java.util.Optional.empty() : java.util.Optional.of(cursor))
+                        .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<WorkflowsResponse>() {})
+                .block(); // Si tu app es MVC; si es WebFlux “puro”, evita block() y usa Mono.
+    }
+
+    /** Carga todas las páginas, si aplica. */
+    public List<WorkflowDto> getAllWorkflows() {
+        List<WorkflowDto> out = new java.util.ArrayList<>();
+        String cursor = null;
+        do {
+            WorkflowsResponse page = getWorkflowsPage(cursor);
+            if (page == null) break;
+            if (page.data() != null) out.addAll(page.data());
+            cursor = page.nextCursor();
+        } while (cursor != null);
+        return out;
     }
 }
