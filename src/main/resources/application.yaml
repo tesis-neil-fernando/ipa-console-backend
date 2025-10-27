@@ -3,11 +3,9 @@ spring:
     name: ipa-console-backend
   datasource:
     driver-class-name: org.postgresql.Driver
-    # url: jdbc:postgresql://localhost:5432/${PG_DB}
-    # username: ${PG_USER}
-    # password: ${PG_PASSWORD}
 fernandoschilder:
   app:
+    front-url: ${FRONT_URL}
     jwtSecret: ${JWT_SECRET}
     jwtExpirationMs: 7200000
     n8n-url: ${N8N_URL}

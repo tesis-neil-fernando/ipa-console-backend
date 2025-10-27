@@ -11,6 +11,7 @@ services:
       - N8N_API_KEY=${N8N_API_KEY}
       - JWT_SECRET=${JWT_SECRET}
       - SPRING_PROFILES_ACTIVE=${SB_PROFILE}
+      - FRONT_URL=${FRONT_URL}
     ports:
       - "8080:8080"
     depends_on:
