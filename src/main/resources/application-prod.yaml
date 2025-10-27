@@ -1,8 +1,8 @@
 spring:
   jpa:
     hibernate:
-      ddl-auto: validate   # en prod valida, NO crea/actualiza
+      ddl-auto: validate
     open-in-view: false
   flyway:
     enabled: true
-    baseline-on-migrate: true
+    locations: classpath:db/migration
