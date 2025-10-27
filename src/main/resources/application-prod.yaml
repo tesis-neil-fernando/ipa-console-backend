@@ -1,5 +1,8 @@
 spring:
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: false
+      ddl-auto: validate   # en prod valida, NO crea/actualiza
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
