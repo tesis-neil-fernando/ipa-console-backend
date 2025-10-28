@@ -29,30 +29,8 @@ public class JwtAuthController {
     AuthenticationManager authenticationManager;
 
     @Autowired
-    PasswordEncoder encoder;
-
-    @Autowired
     JwtUtils jwtUtils;
 
-    @Autowired
-    UserRepository userRepository;
-
-    @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody UserEntity signUpRequest, HttpServletRequest request) throws UnsupportedEncodingException {
-
-        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity.badRequest()
-                    .body("Error: Username is already taken!");
-        }
-        UserEntity user = new UserEntity();
-        user.setUsername(signUpRequest.getUsername());
-        user.setPassword(encoder.encode(signUpRequest.getPassword()));
-        user.setEnabled(true);
-
-        userRepository.save(user);
-
-        return ResponseEntity.ok(user);
-    }
 
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {

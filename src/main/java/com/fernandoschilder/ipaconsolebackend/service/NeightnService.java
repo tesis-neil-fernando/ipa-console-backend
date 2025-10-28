@@ -2,11 +2,9 @@ package com.fernandoschilder.ipaconsolebackend.service;
 
 import com.fernandoschilder.ipaconsolebackend.dto.WorkflowDto;
 import com.fernandoschilder.ipaconsolebackend.dto.WorkflowsResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -27,10 +25,9 @@ public class NeightnService {
                         .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<WorkflowsResponse>() {})
-                .block(); // Si tu app es MVC; si es WebFlux “puro”, evita block() y usa Mono.
+                .block();
     }
 
-    /** Carga todas las páginas, si aplica. */
     public List<WorkflowDto> getAllWorkflows() {
         List<WorkflowDto> out = new java.util.ArrayList<>();
         String cursor = null;

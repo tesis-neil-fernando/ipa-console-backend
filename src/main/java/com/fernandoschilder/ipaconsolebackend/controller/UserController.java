@@ -15,4 +15,13 @@ public class UserController {
     public UserEntity getUser(@PathVariable String username) {
         return userService.getUserByUsername(username);
     }
+
+    @PostMapping("")
+    public UserEntity createUser(@RequestBody UserEntity user) {
+        return userService.createUser(user);
+    }
+
+    //editar usuario
+
+
 }
