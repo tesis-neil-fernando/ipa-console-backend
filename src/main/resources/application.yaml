@@ -11,5 +11,5 @@ fernandoschilder:
     n8n-url: ${N8N_URL}
     n8n-apikey: ${N8N_API_KEY}
     cron:
-      retrieve-processes: "0 */5 * * * *"
+      retrieve-workflows: "0 */5 * * * *"
       retrieve-logs: "0 */1 * * * *"
