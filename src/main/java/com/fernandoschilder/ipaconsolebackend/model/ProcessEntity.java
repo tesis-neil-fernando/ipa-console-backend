@@ -25,6 +25,11 @@ public class ProcessEntity {
     @NonNull
     @Column(name = "description")
     private String description;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workflow_id")
+    private WorkflowEntity workflow;
+
     @OneToMany(mappedBy = "process")
     private Set<ParameterEntity> parameters;
 }

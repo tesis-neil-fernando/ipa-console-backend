@@ -1,24 +1,26 @@
 package com.fernandoschilder.ipaconsolebackend.controller;
 
-import com.fernandoschilder.ipaconsolebackend.model.N8nWorkflowEntity;
-import com.fernandoschilder.ipaconsolebackend.response.N8nWorkflowsResponse;
-import com.fernandoschilder.ipaconsolebackend.service.N8nService;
+import com.fernandoschilder.ipaconsolebackend.service.N8nApiService;
+import com.fernandoschilder.ipaconsolebackend.service.N8nApiService.ApiResponse;
+import com.fernandoschilder.ipaconsolebackend.service.N8nWebhookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Mono;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/n8n")
 public class N8nController {
+
     @Autowired
-    private N8nService service;
+    private N8nApiService n8nApiService;
+
+    @Autowired
+    private N8nWebhookService n8nWebhookService;
 
     @GetMapping("/executions")
-    public ResponseEntity<String> list(
+    public ResponseEntity<ApiResponse<String>> list(
             @RequestParam(required = false) Boolean includeData,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String workflowId,
@@ -26,11 +28,29 @@ public class N8nController {
             @RequestParam(required = false, defaultValue = "100") Integer limit,
             @RequestParam(required = false) String cursor) {
 
-        try {
-            return service.getExecutions(includeData, status, workflowId, projectId, limit, cursor);
-        } catch (Exception ex) {
-            return ResponseEntity.internalServerError()
-                    .body("{\"error\":\"Error al obtener ejecuciones de n8n\"}");
-        }
+        return n8nApiService.getExecutions(includeData, status, workflowId, projectId, limit, cursor);
+    }
+
+    @GetMapping("/workflows")
+    public ResponseEntity<ApiResponse<String>> getWorkflows() {
+        return n8nApiService.getWorkflowsRaw();
+    }
+
+    @PostMapping("/workflows/{id}/activate")
+    public ResponseEntity<ApiResponse<String>> activateWorkflow(@PathVariable("id") String workflowId) {
+        return n8nApiService.activateWorkflow(workflowId);
+    }
+
+    @PostMapping("/workflows/{id}/deactivate")
+    public ResponseEntity<ApiResponse<String>> deactivateWorkflow(@PathVariable("id") String workflowId) {
+        return n8nApiService.deactivateWorkflow(workflowId);
+    }
+
+    @PostMapping("/webhook/{path}")
+    public ResponseEntity<N8nApiService.ApiResponse<String>> forwardWebhook(
+            @PathVariable String path,
+            @RequestBody(required = false) Map<String, Object> body
+    ) {
+        return n8nWebhookService.postWebhook(path, body);
     }
 }

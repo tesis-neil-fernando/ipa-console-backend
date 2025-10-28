@@ -10,6 +10,7 @@ fernandoschilder:
     jwtExpirationMs: 7200000
     n8n-url: ${N8N_URL}
     n8n-apikey: ${N8N_API_KEY}
+    n8n-webhookkey: ${N8N_WEBHOOK_KEY}
     cron:
       retrieve-workflows: "0 */5 * * * *"
       retrieve-logs: "0 */1 * * * *"
