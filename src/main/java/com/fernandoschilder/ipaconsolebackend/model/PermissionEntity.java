@@ -1,5 +1,6 @@
 package com.fernandoschilder.ipaconsolebackend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Set;
@@ -19,13 +20,15 @@ public class PermissionEntity {
 
     @NonNull
     @Column(name = "type", unique = true, nullable = false, length = 100)
-    private String type;   // p.ej.: "administrador", "visualizar", "ejecutar", "editar_parametros"
+    private String type;   // "administrador", "visualizar", "ejecutar", "editar_parametros", etc.
 
-    // Lado inverso de RoleEntity.permissions
+    // Inverso de RoleEntity.role_permissions  (¡ojo al nombre!)
+    @JsonIgnore
     @ManyToMany(mappedBy = "permissions", fetch = FetchType.LAZY)
     private Set<RoleEntity> roles;
 
     // (Opcional) Permisos aplicados a namespaces
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "permission_namespaces",

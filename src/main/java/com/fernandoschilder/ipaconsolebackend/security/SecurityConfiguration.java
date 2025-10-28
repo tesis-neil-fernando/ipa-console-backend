@@ -36,6 +36,9 @@ public class SecurityConfiguration {
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
 
+    @Autowired
+    private RestAccessDeniedHandler accessDeniedHandler;
+
     private static final String[] WHITE_LIST_URL = {  "swagger-ui/**", "/v3/**", "/auth/**", "/user-dashboard" };
 
     @Value("${fernandoschilder.app.front-url}")
@@ -75,7 +78,10 @@ public class SecurityConfiguration {
                         .permitAll()
                         .anyRequest()
                         .authenticated())
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(unauthorizedHandler) // 401
+                        .accessDeniedHandler(accessDeniedHandler)      // 403  ← usa el bean
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
