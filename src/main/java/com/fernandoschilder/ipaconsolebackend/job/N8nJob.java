@@ -11,7 +11,7 @@ public class N8nJob {
     WorkflowSyncService workflowSyncService;
 
     @Scheduled(cron = "${fernandoschilder.app.cron.retrieve-workflows}", zone = "America/Lima")
-    public void retriveWorklows() {
+    public void retrieveWorklows() {
         int size = workflowSyncService.pullAndSave();
         System.out.println("Retrieve worklfows size : " + size);
     }
