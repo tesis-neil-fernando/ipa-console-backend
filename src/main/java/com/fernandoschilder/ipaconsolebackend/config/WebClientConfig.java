@@ -16,8 +16,8 @@ public class WebClientConfig {
     @Value("${fernandoschilder.app.n8n-url}")
     private String n8nUrl;
 
-    @Bean
-    public WebClient webClient(WebClient.Builder builder) {
+    @Bean("n8nClient")
+    public WebClient n8nClient(WebClient.Builder builder) {
         return builder
                 .baseUrl(n8nUrl)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
