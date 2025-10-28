@@ -3,6 +3,7 @@ package com.fernandoschilder.ipaconsolebackend.controller;
 import com.fernandoschilder.ipaconsolebackend.model.UserEntity;
 import com.fernandoschilder.ipaconsolebackend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,7 +22,11 @@ public class UserController {
         return userService.createUser(user);
     }
 
-    //editar usuario
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok("User with id " + id + " deleted successfully.");
+    }
 
 
 }
