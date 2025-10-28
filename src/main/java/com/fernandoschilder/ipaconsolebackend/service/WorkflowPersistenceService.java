@@ -2,7 +2,7 @@ package com.fernandoschilder.ipaconsolebackend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fernandoschilder.ipaconsolebackend.dto.WorkflowDto;
-import com.fernandoschilder.ipaconsolebackend.model.Workflow;
+import com.fernandoschilder.ipaconsolebackend.model.WorkflowEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.WorkflowRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,8 +23,8 @@ public class WorkflowPersistenceService {
     @Transactional
     public void upsertAll(List<WorkflowDto> dtos) {
         for (WorkflowDto dto : dtos) {
-            Workflow e = repo.findById(dto.id())
-                    .orElseGet(Workflow::new);
+            WorkflowEntity e = repo.findById(dto.id())
+                    .orElseGet(WorkflowEntity::new);
             e.setId(dto.id());
             e.setName(dto.name());
             e.setActive(dto.active());

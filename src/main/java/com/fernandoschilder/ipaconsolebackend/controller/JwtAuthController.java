@@ -3,6 +3,7 @@ package com.fernandoschilder.ipaconsolebackend.controller;
 import java.io.UnsupportedEncodingException;
 
 import com.fernandoschilder.ipaconsolebackend.dto.JwtResponse;
+import com.fernandoschilder.ipaconsolebackend.model.UserEntity;
 import com.fernandoschilder.ipaconsolebackend.utils.JwtUtils;
 import com.fernandoschilder.ipaconsolebackend.dto.LoginRequest;
 import com.fernandoschilder.ipaconsolebackend.security.UserDetailsImpl;
@@ -16,7 +17,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import com.fernandoschilder.ipaconsolebackend.model.User;
 import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,13 +38,13 @@ public class JwtAuthController {
     UserRepository userRepository;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody User signUpRequest, HttpServletRequest request) throws UnsupportedEncodingException {
+    public ResponseEntity<?> registerUser(@RequestBody UserEntity signUpRequest, HttpServletRequest request) throws UnsupportedEncodingException {
 
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
             return ResponseEntity.badRequest()
                     .body("Error: Username is already taken!");
         }
-        User user = new User();
+        UserEntity user = new UserEntity();
         user.setUsername(signUpRequest.getUsername());
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
         user.setEnabled(true);

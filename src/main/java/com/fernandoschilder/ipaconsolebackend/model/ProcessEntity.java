@@ -11,14 +11,14 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 @Table(name = "processes")
-public class Process {
+public class ProcessEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "process_id")
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "namespace_id")
-    private Namespace namespace;
+    private NamespaceEntity namespace;
     @NonNull
     @Column(name = "name")
     private String name;
@@ -26,5 +26,5 @@ public class Process {
     @Column(name = "description")
     private String description;
     @OneToMany(mappedBy = "process")
-    private Set<Parameter> parameters;
+    private Set<ParameterEntity> parameters;
 }

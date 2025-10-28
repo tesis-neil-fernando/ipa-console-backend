@@ -10,7 +10,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 @Table(name = "roles")
-public class Role {
+public class RoleEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "role_id")
@@ -23,12 +23,12 @@ public class Role {
     private String description;
 
     @ManyToMany(mappedBy = "user_roles")
-    private Set<User> users;
+    private Set<UserEntity> users;
 
     @ManyToMany
     @JoinTable(name = "role_permissions",
     joinColumns = @JoinColumn(name = "role_id"),
     inverseJoinColumns = @JoinColumn(name = "permission_id"))
-    private Set<Permission> role_permissions;
+    private Set<PermissionEntity> role_permissions;
 
 }

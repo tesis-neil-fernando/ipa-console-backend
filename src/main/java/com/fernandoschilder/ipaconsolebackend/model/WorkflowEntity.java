@@ -2,7 +2,7 @@ package com.fernandoschilder.ipaconsolebackend.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.RequiredArgsConstructor;
+
 import java.time.OffsetDateTime;
 
 @Data
@@ -10,7 +10,7 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @Entity
 @Table(name = "workflows")
-public class Workflow {
+public class WorkflowEntity {
 
     @Id
     @Column(length = 64)

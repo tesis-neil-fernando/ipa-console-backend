@@ -10,7 +10,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 @Table(name = "namespaces")
-public class Namespace {
+public class NamespaceEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "namespace_id")
@@ -20,8 +20,8 @@ public class Namespace {
     private String name;
 
     @ManyToMany(mappedBy = "permission_namespaces")
-    private Set<Permission> permissions;
+    private Set<PermissionEntity> permissions;
 
     @OneToMany(mappedBy = "namespace")
-    private Set<Process> processes;
+    private Set<ProcessEntity> processes;
 }

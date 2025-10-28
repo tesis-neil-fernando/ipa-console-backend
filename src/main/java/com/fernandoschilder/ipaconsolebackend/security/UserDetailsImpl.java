@@ -3,7 +3,7 @@ package com.fernandoschilder.ipaconsolebackend.security;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import com.fernandoschilder.ipaconsolebackend.model.User;
+import com.fernandoschilder.ipaconsolebackend.model.UserEntity;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -28,8 +28,8 @@ public class UserDetailsImpl implements UserDetails {
 
     private Collection<? extends GrantedAuthority> authorities;
 
-    public static UserDetailsImpl build(User user) {
-        Collection<? extends GrantedAuthority> authorities = user.getUser_roles().stream().map(role -> new SimpleGrantedAuthority(role.getName())) // Assuming Role has a 'getName()' method
+    public static UserDetailsImpl build(UserEntity user) {
+        Collection<? extends GrantedAuthority> authorities = user.getUser_roles().stream().map(role -> new SimpleGrantedAuthority(role.getName())) // Assuming RoleEntity has a 'getName()' method
                 .collect(Collectors.toList());
 
         return new UserDetailsImpl(user.getId(), user.getUsername(), user.getPassword(), user.isEnabled(), authorities);

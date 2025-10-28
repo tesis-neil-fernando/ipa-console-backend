@@ -3,32 +3,29 @@ package com.fernandoschilder.ipaconsolebackend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
+import java.util.Date;
 
 @Data
 @RequiredArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "logs")
-public class Log {
+@Table(name = "events")
+public class EventEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "log_id")
+    @Column(name = "event_id")
     private Long id;
     @NonNull
     @Column(name = "time")
-    private Instant time;
-    @NonNull
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date time;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "process_id", nullable = false)
-    private Process process;
+    private ProcessEntity process;
     @NonNull
-    @Column(name = "initiator")
-    private String initiator;
+    @Column(name = "type")
+    private String type;
     @NonNull
-    @Column(name = "state")
-    private String state;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(name = "message")
+    private String message;
 }

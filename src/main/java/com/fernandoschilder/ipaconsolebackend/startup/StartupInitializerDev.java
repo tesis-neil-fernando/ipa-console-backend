@@ -1,6 +1,6 @@
 package com.fernandoschilder.ipaconsolebackend.startup;
 
-import com.fernandoschilder.ipaconsolebackend.model.User;
+import com.fernandoschilder.ipaconsolebackend.model.UserEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -18,7 +18,7 @@ public class StartupInitializerDev implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        User user = new User();
+        UserEntity user = new UserEntity();
         user.setUsername("fschilder");
         user.setPassword("May2letter#");
         if (!userRepository.existsByUsername(user.getUsername())) {
