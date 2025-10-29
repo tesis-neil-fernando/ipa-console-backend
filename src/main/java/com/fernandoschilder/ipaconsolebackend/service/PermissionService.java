@@ -7,7 +7,6 @@ import com.fernandoschilder.ipaconsolebackend.repository.PermissionRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-// Lombok removed - explicit constructor added
 import org.springframework.stereotype.Service;
 
 import java.util.List;

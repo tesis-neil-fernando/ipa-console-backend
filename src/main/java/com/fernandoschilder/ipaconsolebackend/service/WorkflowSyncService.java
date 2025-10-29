@@ -1,13 +1,10 @@
 package com.fernandoschilder.ipaconsolebackend.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fernandoschilder.ipaconsolebackend.model.TagEntity;
 import com.fernandoschilder.ipaconsolebackend.model.WorkflowEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.WorkflowRepository;
 import com.fernandoschilder.ipaconsolebackend.repository.TagRepository;
-// Lombok removed - explicit constructor and record used below
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;

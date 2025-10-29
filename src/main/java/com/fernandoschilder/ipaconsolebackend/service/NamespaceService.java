@@ -3,7 +3,6 @@ package com.fernandoschilder.ipaconsolebackend.service;
 import com.fernandoschilder.ipaconsolebackend.dto.NamespaceDTO;
 import com.fernandoschilder.ipaconsolebackend.model.NamespaceEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.NamespaceRepository;
-// Lombok removed - explicit constructor added
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityExistsException;

@@ -5,7 +5,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.fernandoschilder.ipaconsolebackend.model.UserEntity;
-// Lombok removed - implement constructor, getters and equals/hashCode explicitly
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -2,7 +2,6 @@ package com.fernandoschilder.ipaconsolebackend.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
-// Lombok removed - add explicit logger and use a record for ApiResponse
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;

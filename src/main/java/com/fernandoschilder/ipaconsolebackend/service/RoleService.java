@@ -6,7 +6,6 @@ import com.fernandoschilder.ipaconsolebackend.repository.PermissionRepository;
 import com.fernandoschilder.ipaconsolebackend.repository.RoleRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
-// Lombok removed - explicit constructor added
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

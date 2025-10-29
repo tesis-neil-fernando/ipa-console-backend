@@ -2,7 +2,6 @@ package com.fernandoschilder.ipaconsolebackend.job;
 
 import com.fernandoschilder.ipaconsolebackend.service.WorkflowSyncService;
 import com.fernandoschilder.ipaconsolebackend.service.WorkflowSyncService.SyncSummary;
-// Lombok removed - explicit constructor added
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;

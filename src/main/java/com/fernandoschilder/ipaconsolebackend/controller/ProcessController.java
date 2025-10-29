@@ -5,7 +5,6 @@ import com.fernandoschilder.ipaconsolebackend.dto.ProcessResponseDto;
 import com.fernandoschilder.ipaconsolebackend.dto.ProcessUpdateDto;
 import com.fernandoschilder.ipaconsolebackend.service.ProcessService;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

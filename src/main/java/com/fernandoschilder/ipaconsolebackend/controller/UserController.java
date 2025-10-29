@@ -2,7 +2,6 @@ package com.fernandoschilder.ipaconsolebackend.controller;
 
 import com.fernandoschilder.ipaconsolebackend.dto.UserViewDTO;
 import com.fernandoschilder.ipaconsolebackend.dto.UserCreateDto;
-import com.fernandoschilder.ipaconsolebackend.model.UserEntity;
 import com.fernandoschilder.ipaconsolebackend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Page;
