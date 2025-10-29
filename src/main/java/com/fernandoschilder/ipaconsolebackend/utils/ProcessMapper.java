@@ -10,7 +10,6 @@ public final class ProcessMapper {
 
     private ProcessMapper() {}
 
-    // -- Workflow
     public static WorkflowResponseDto toWorkflowDto(WorkflowEntity w) {
         if (w == null) return null;
         Set<TagResponseDto> tagDtos = w.getTags().stream()
@@ -27,7 +26,6 @@ public final class ProcessMapper {
         );
     }
 
-    // -- Process
     public static ProcessResponseDto toResponseDto(ProcessEntity p) {
         return new ProcessResponseDto(
                 p.getId(),

@@ -31,8 +31,8 @@ public class ProcessEntity {
     @Column(name = "description")
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "workflow_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workflow_id", unique = true)
     private WorkflowEntity workflow;
 
     @OneToMany(mappedBy = "process", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProcessRepository extends JpaRepository<ProcessEntity, Long> {
+    Optional<ProcessEntity> findByWorkflow_Id(String workflowId);
+
+    boolean existsByWorkflow_Id(String workflowId);
+
     @EntityGraph(attributePaths = {"workflow", "parameters"})
     Optional<ProcessEntity> findById(Long id);
 

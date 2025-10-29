@@ -7,6 +7,7 @@ import com.fernandoschilder.ipaconsolebackend.dto.ProcessResponseDto;
 import com.fernandoschilder.ipaconsolebackend.dto.ProcessUpdateDto;
 import com.fernandoschilder.ipaconsolebackend.model.ParameterEntity;
 import com.fernandoschilder.ipaconsolebackend.model.ProcessEntity;
+import com.fernandoschilder.ipaconsolebackend.model.WorkflowEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.WorkflowRepository;
 import com.fernandoschilder.ipaconsolebackend.repository.ProcessRepository;
 import com.fernandoschilder.ipaconsolebackend.utils.ProcessMapper;
@@ -31,14 +32,33 @@ public class ProcessService {
     private final ObjectMapper objectMapper;
 
     @Transactional
+    public ProcessEntity ensureProcessForWorkflow(WorkflowEntity workflow, String name, String description) {
+        var existing = processRepository.findByWorkflow_Id(workflow.getId());
+        if (existing.isPresent()) return existing.get();
+
+        var p = new ProcessEntity();
+        p.setName(name);
+        p.setDescription(description);
+        p.setWorkflow(workflow);
+        workflow.setProcess(p);
+        return processRepository.saveAndFlush(p);
+    }
+
+    @Transactional
     public ProcessResponseDto create(ProcessCreateDto dto) {
-        var workflow = workflowRepository.findById(dto.workflowId())
-                .orElseThrow(() -> new EntityNotFoundException("Workflow not found (aún no existe en DB o ID incorrecto): " + dto.workflowId()));
+        var workflow = workflowRepository.findById(/* or findByIdForUpdate */ dto.workflowId())
+                .orElseThrow(() -> new EntityNotFoundException("Workflow not found: " + dto.workflowId()));
+
+        if (processRepository.existsByWorkflow_Id(workflow.getId())) {
+            throw new IllegalStateException("Workflow " + workflow.getId() + " already has a process");
+        }
 
         var process = new ProcessEntity();
         process.setName(dto.name());
         process.setDescription(dto.description());
+        // set both sides to keep the relation consistent
         process.setWorkflow(workflow);
+        workflow.setProcess(process);
 
         if (dto.parameters() != null) {
             for (var pd : dto.parameters()) {
@@ -46,15 +66,15 @@ public class ProcessService {
                 pe.setName(pd.name());
                 pe.setValue(pd.value());
                 pe.setType(pd.type());
-                process.addParameter(pe);           // sets both sides
+                process.addParameter(pe);
             }
         }
 
-        var saved = processRepository.save(process); // cascades parameters
-
+        var saved = processRepository.saveAndFlush(process);
         var dtoBase = ProcessMapper.toResponseDto(saved);
         return enrichWithLastExecution(dtoBase);
     }
+
 
     @Transactional
     public ResponseEntity<?> start(Long id) {

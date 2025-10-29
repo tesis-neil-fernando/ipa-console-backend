@@ -26,8 +26,8 @@ public class WorkflowEntity {
     @Column(name = "raw_json", columnDefinition = "text")
     private String rawJson;
 
-    @OneToMany(mappedBy = "workflow")
-    private Set<ProcessEntity> processes = new HashSet<>();
+    @OneToOne(mappedBy = "workflow", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
+    private ProcessEntity process;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -46,4 +46,10 @@ public class WorkflowEntity {
     }
     @Override
     public int hashCode() { return Objects.hash(id); }
+
+    public void setProcess(ProcessEntity p) {
+        this.process = p;
+        if (p != null) p.setWorkflow(this);
+    }
+
 }
