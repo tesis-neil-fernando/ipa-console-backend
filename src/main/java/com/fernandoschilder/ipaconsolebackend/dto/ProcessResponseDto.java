@@ -6,6 +6,7 @@ public record ProcessResponseDto(
         Long id,
         String name,
         String description,
-        WorkflowDto workflow,
-        List<ParameterResponseDto> parameters
+        WorkflowResponseDto workflow,
+        List<ParameterResponseDto> parameters,
+        ExecutionBriefDto executionBrief
 ) {}

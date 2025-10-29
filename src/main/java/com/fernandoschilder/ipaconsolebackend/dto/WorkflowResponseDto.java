@@ -1,8 +1,9 @@
 package com.fernandoschilder.ipaconsolebackend.dto;
 
-public record WorkflowDto(
+public record WorkflowResponseDto(
         String id,
         String name,
         boolean active,
-        boolean archived
+        boolean archived,
+        String rawJson
 ) {}

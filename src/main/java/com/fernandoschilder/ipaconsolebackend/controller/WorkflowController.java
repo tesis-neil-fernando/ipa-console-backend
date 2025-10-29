@@ -1,23 +1,30 @@
 package com.fernandoschilder.ipaconsolebackend.controller;
 
-import com.fernandoschilder.ipaconsolebackend.model.WorkflowEntity;
+import com.fernandoschilder.ipaconsolebackend.dto.WorkflowResponseDto;
 import com.fernandoschilder.ipaconsolebackend.service.WorkflowService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/workflows")
 public class WorkflowController {
-    @Autowired
-    private WorkflowService workflowService;
 
-    @GetMapping("")
-    public List<WorkflowEntity> findAll()
-    {
-        return workflowService.findAll();
+    private final WorkflowService workflowService;
+
+    @GetMapping
+    public ResponseEntity<List<WorkflowResponseDto>> findAll(
+            @RequestParam(defaultValue = "false") boolean includeRaw) {
+        return ResponseEntity.ok(workflowService.findAll(includeRaw));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<WorkflowResponseDto> findById(
+            @PathVariable String id,
+            @RequestParam(defaultValue = "false") boolean includeRaw) {
+        return ResponseEntity.ok(workflowService.findById(id, includeRaw));
     }
 }
