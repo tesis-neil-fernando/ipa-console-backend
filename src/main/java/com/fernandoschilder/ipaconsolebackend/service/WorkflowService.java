@@ -1,7 +1,7 @@
 package com.fernandoschilder.ipaconsolebackend.service;
 
 import com.fernandoschilder.ipaconsolebackend.dto.WorkflowResponseDto;
-import com.fernandoschilder.ipaconsolebackend.repository.N8nWorkflowRepository;
+import com.fernandoschilder.ipaconsolebackend.repository.WorkflowRepository;
 import com.fernandoschilder.ipaconsolebackend.utils.WorkflowMapper;
 import jakarta.persistence.EntityNotFoundException;
 
@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WorkflowService {
 
-    private final N8nWorkflowRepository workflowRepository;
+    private final WorkflowRepository workflowRepository;
 
     @Transactional(readOnly = true)
     public List<WorkflowResponseDto> findAll(boolean includeRaw) {

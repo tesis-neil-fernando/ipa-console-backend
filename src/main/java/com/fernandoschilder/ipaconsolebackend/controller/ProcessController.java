@@ -1,6 +1,8 @@
 package com.fernandoschilder.ipaconsolebackend.controller;
+
 import com.fernandoschilder.ipaconsolebackend.dto.ProcessCreateDto;
 import com.fernandoschilder.ipaconsolebackend.dto.ProcessResponseDto;
+import com.fernandoschilder.ipaconsolebackend.dto.ProcessUpdateDto;
 import com.fernandoschilder.ipaconsolebackend.service.ProcessService;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -17,28 +19,27 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProcessController {
 
-    private final ProcessService service;
+    private final ProcessService processService;
 
     @PostMapping
     public ResponseEntity<ProcessResponseDto> create(@Valid @RequestBody ProcessCreateDto dto) {
-        var res = service.create(dto);
+        var res = processService.create(dto);
         return ResponseEntity.created(URI.create("/processes/" + res.id())).body(res);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProcessResponseDto> get(@PathVariable Long id) {
-        return ResponseEntity.ok(service.get(id));
+        return ResponseEntity.ok(processService.get(id));
     }
 
     @GetMapping
     public ResponseEntity<List<ProcessResponseDto>> list() {
-        return ResponseEntity.ok(service.list());
+        return ResponseEntity.ok(processService.list());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
+    @PatchMapping("/{id}")
+    public ProcessResponseDto update(@PathVariable Long id, @RequestBody @Valid ProcessUpdateDto dto) {
+        return processService.update(id, dto);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
