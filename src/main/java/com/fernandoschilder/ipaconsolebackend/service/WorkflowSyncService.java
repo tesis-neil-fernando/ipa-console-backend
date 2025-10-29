@@ -102,9 +102,11 @@ public class WorkflowSyncService {
             return new SyncSummary(entities.size(), toCreate, toUpdate);
 
         } catch (N8nClientException e) {
-            throw new RuntimeException("No se pudo obtener workflows desde n8n: " + e.getMessage(), e);
+            // preserve client exception so GlobalExceptionHandler can translate it correctly
+            throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Error procesando workflows", e);
+            // wrap unexpected errors into N8nClientException so the global handler returns a 502/Bad Gateway
+            throw new N8nClientException("Error procesando workflows: " + e.getMessage(), e);
         }
     }
 

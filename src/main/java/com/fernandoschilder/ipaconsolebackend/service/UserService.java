@@ -8,12 +8,13 @@ import com.fernandoschilder.ipaconsolebackend.repository.RoleRepository;
 import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
 import com.fernandoschilder.ipaconsolebackend.repository.spec.UserSpecifications;
 import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+// no UsernameNotFoundException here; use EntityNotFoundException for API flows
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -59,14 +60,14 @@ public class UserService {
     }
 
     public UserEntity getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(
-                        "UserEntity Not Found with username: " + username));
+    return userRepository.findByUsername(username)
+        .orElseThrow(() -> new EntityNotFoundException(
+            "UserEntity Not Found with username: " + username));
     }
 
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new UsernameNotFoundException("User with id " + id + " not found");
+            throw new EntityNotFoundException("User with id " + id + " not found");
         }
         userRepository.deleteById(id);
     }
@@ -94,7 +95,7 @@ public class UserService {
     @Transactional
     public UserViewDTO updateEnabled(Long id, boolean enabled) {
     UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("User with id " + id + " not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User with id " + id + " not found"));
     user.setEnabled(enabled);
     return userMapper.toViewDTO(userRepository.save(user));
     }
@@ -102,7 +103,7 @@ public class UserService {
     @Transactional
     public UserViewDTO setUserRoles(String username, Set<String> roleNames) {
         UserEntity user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("UserEntity Not Found with username: " + username));
+                .orElseThrow(() -> new EntityNotFoundException("UserEntity Not Found with username: " + username));
 
         List<RoleEntity> found = roleRepository.findByNameIn(roleNames == null ? Set.of() : roleNames);
         Set<RoleEntity> roles = new HashSet<>(found);

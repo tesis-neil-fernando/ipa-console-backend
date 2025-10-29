@@ -58,7 +58,7 @@ public class ProcessService {
                 .orElseThrow(() -> new EntityNotFoundException("Workflow not found: " + dto.workflowId()));
 
         if (processRepository.existsByWorkflow_Id(workflow.getId())) {
-            throw new IllegalStateException("Workflow " + workflow.getId() + " already has a process");
+            throw new jakarta.persistence.EntityExistsException("Workflow " + workflow.getId() + " already has a process");
         }
 
         var process = new ProcessEntity();

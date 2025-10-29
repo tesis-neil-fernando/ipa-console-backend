@@ -5,9 +5,9 @@ import com.fernandoschilder.ipaconsolebackend.service.PermissionService;
 import com.fernandoschilder.ipaconsolebackend.dto.PermissionDTO;
 import com.fernandoschilder.ipaconsolebackend.mapper.PermissionMapper;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.bind.annotation.*;
 import com.fernandoschilder.ipaconsolebackend.dto.AssignNamespacesDTO;
+import com.fernandoschilder.ipaconsolebackend.dto.CreatePermissionDTO;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -50,8 +50,7 @@ public class PermissionController {
         return mapper.toPermissionDto(permissionService.setNamespaces(type, body.namespaces()));
     }
 
-    // DTO de entrada
-    public record CreatePermissionDTO(@NotBlank String type) {}
+    // DTO moved to `com.fernandoschilder.ipaconsolebackend.dto.CreatePermissionDTO`.
 
     
 }

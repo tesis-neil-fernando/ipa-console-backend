@@ -4,12 +4,13 @@ import com.fernandoschilder.ipaconsolebackend.model.RoleEntity;
 import com.fernandoschilder.ipaconsolebackend.service.RoleService;
 import com.fernandoschilder.ipaconsolebackend.dto.RoleDTO;
 import com.fernandoschilder.ipaconsolebackend.mapper.RoleMapper;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import java.net.URI;
 import java.util.List;
+import com.fernandoschilder.ipaconsolebackend.dto.CreateRoleDTO;
+import com.fernandoschilder.ipaconsolebackend.dto.SetPermsDTO;
 
 @RestController
 @RequestMapping("/roles")
@@ -54,9 +55,9 @@ public class RoleController {
         return mapper.toRoleDto(roleService.addPermissionsToRole(name, req.permissions()));
     }
 
-    // DTOs de entrada
-    public record CreateRoleDTO(@NotBlank String name, String description) {}
-    public record SetPermsDTO(List<String> permissions) {}
+    // DTOs moved to `com.fernandoschilder.ipaconsolebackend.dto` package:
+    // - CreateRoleDTO
+    // - SetPermsDTO
 
     
 }
