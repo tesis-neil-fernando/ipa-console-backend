@@ -5,7 +5,6 @@ import com.fernandoschilder.ipaconsolebackend.repository.WorkflowRepository;
 import com.fernandoschilder.ipaconsolebackend.mapper.WorkflowMapper;
 import jakarta.persistence.EntityNotFoundException;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

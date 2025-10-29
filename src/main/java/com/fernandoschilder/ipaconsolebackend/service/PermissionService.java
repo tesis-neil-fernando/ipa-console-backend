@@ -7,7 +7,7 @@ import com.fernandoschilder.ipaconsolebackend.repository.PermissionRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+// Lombok removed - explicit constructor added
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,11 +15,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class PermissionService {
 
     private final PermissionRepository permissionRepository;
     private final NamespaceRepository namespaceRepository; // ← nuevo
+
+    public PermissionService(PermissionRepository permissionRepository, NamespaceRepository namespaceRepository) {
+        this.permissionRepository = permissionRepository;
+        this.namespaceRepository = namespaceRepository;
+    }
 
     /* ======================== CRUD PERMISO ======================== */
 

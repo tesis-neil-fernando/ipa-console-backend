@@ -1,14 +1,9 @@
 package com.fernandoschilder.ipaconsolebackend.dto;
 
-import lombok.Getter;
-import lombok.Setter;
-
+/** Minimal JWT response holder without Lombok. */
 public class JwtResponse {
     private String token;
     private String type = "Bearer";
-
-    @Getter
-    @Setter
     private String username;
 
     public JwtResponse(String accessToken, String username) {
@@ -32,4 +27,11 @@ public class JwtResponse {
         this.type = tokenType;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
 }

@@ -2,18 +2,20 @@ package com.fernandoschilder.ipaconsolebackend.controller;
 
 import com.fernandoschilder.ipaconsolebackend.dto.WorkflowResponseDto;
 import com.fernandoschilder.ipaconsolebackend.service.WorkflowService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/workflows")
 public class WorkflowController {
 
     private final WorkflowService workflowService;
+
+    public WorkflowController(WorkflowService workflowService) {
+        this.workflowService = workflowService;
+    }
 
     @GetMapping
     public ResponseEntity<List<WorkflowResponseDto>> findAll(

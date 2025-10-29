@@ -47,7 +47,7 @@ public class PermissionController {
     public PermissionDTO assignNamespacesToPermission(
             @PathVariable String type,
             @RequestBody AssignNamespacesDTO body) {
-        return mapper.toPermissionDto(permissionService.setNamespaces(type, body.getNamespaces()));
+        return mapper.toPermissionDto(permissionService.setNamespaces(type, body.namespaces()));
     }
 
     // DTO de entrada

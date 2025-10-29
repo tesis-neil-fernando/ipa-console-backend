@@ -6,7 +6,7 @@ import com.fernandoschilder.ipaconsolebackend.repository.PermissionRepository;
 import com.fernandoschilder.ipaconsolebackend.repository.RoleRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+// Lombok removed - explicit constructor added
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,11 +15,15 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-@RequiredArgsConstructor
 public class RoleService {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+
+    public RoleService(RoleRepository roleRepository, PermissionRepository permissionRepository) {
+        this.roleRepository = roleRepository;
+        this.permissionRepository = permissionRepository;
+    }
 
     public RoleEntity createRole(String name, String description) {
         if (roleRepository.existsByName(name)) {

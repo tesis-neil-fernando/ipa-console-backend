@@ -4,7 +4,6 @@ import com.fernandoschilder.ipaconsolebackend.dto.JwtResponse;
 import com.fernandoschilder.ipaconsolebackend.utils.JwtUtils;
 import com.fernandoschilder.ipaconsolebackend.dto.LoginRequest;
 import com.fernandoschilder.ipaconsolebackend.security.UserDetailsImpl;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,7 +34,7 @@ public class JwtAuthController {
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
 
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+    Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
 
         SecurityContextHolder.getContext()
                 .setAuthentication(authentication);
@@ -43,7 +42,7 @@ public class JwtAuthController {
 
         String jwt = jwtUtils.generateJwtToken(authentication);
 
-        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getUsername()));
+    return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getUsername()));
 
     }
 

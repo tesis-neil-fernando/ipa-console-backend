@@ -2,9 +2,9 @@ package com.fernandoschilder.ipaconsolebackend.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+// Lombok removed - add explicit logger and use a record for ApiResponse
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
-@Slf4j
 public class N8nApiService {
+
+    private static final Logger log = LoggerFactory.getLogger(N8nApiService.class);
 
     private final WebClient n8nClient;
     private final ObjectMapper objectMapper;
@@ -257,13 +258,7 @@ public class N8nApiService {
         }
     }
 
-    @Data
-    @AllArgsConstructor
-    public static class ApiResponse<T> {
-        private boolean success;
-        private String message;
-        private T data;
-    }
+    public static record ApiResponse<T>(boolean success, String message, T data) {}
 
     /* --- typed n8n shapes used by the client --- */
     @JsonIgnoreProperties(ignoreUnknown = true)

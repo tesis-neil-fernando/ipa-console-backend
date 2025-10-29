@@ -1,10 +1,4 @@
 package com.fernandoschilder.ipaconsolebackend.dto;
 
-import lombok.*;
-
-@Getter @Setter
-public class LoginRequest {
-
-    private String username;
-    private String password;
-}
+/** Simple login request as a record (no Lombok). */
+public record LoginRequest(String username, String password) {}

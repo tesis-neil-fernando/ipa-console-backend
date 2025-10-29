@@ -1,7 +1,6 @@
 package com.fernandoschilder.ipaconsolebackend.service;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+// Lombok removed
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

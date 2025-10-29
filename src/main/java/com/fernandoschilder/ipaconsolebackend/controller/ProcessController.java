@@ -7,7 +7,6 @@ import com.fernandoschilder.ipaconsolebackend.service.ProcessService;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,10 +15,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/processes")
-@RequiredArgsConstructor
 public class ProcessController {
 
     private final ProcessService processService;
+
+    public ProcessController(ProcessService processService) {
+        this.processService = processService;
+    }
 
     @PostMapping
     public ResponseEntity<ProcessResponseDto> create(@Valid @RequestBody ProcessCreateDto dto) {

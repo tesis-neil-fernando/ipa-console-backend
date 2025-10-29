@@ -6,9 +6,7 @@ import com.fernandoschilder.ipaconsolebackend.model.TagEntity;
 import com.fernandoschilder.ipaconsolebackend.model.WorkflowEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.WorkflowRepository;
 import com.fernandoschilder.ipaconsolebackend.repository.TagRepository;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+// Lombok removed - explicit constructor and record used below
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +17,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class WorkflowSyncService {
 
     private final N8nApiService n8nService;
@@ -27,6 +24,14 @@ public class WorkflowSyncService {
     private final TagRepository tagRepository;
     private final ProcessService processService; // <-- NUEVO
     private final ObjectMapper objectMapper;
+
+    public WorkflowSyncService(N8nApiService n8nService, WorkflowRepository workflowRepository, TagRepository tagRepository, ProcessService processService, ObjectMapper objectMapper) {
+        this.n8nService = n8nService;
+        this.workflowRepository = workflowRepository;
+        this.tagRepository = tagRepository;
+        this.processService = processService;
+        this.objectMapper = objectMapper;
+    }
 
     @Transactional
     public SyncSummary pullAndSave() {
@@ -103,11 +108,5 @@ public class WorkflowSyncService {
         }
     }
 
-    @Data
-    @AllArgsConstructor
-    public static class SyncSummary {
-        private int total;
-        private int created;
-        private int updated;
-    }
+    public static record SyncSummary(int total, int created, int updated) {}
 }

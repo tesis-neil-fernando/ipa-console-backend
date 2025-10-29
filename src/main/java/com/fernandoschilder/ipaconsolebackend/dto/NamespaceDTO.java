@@ -1,13 +1,4 @@
 package com.fernandoschilder.ipaconsolebackend.dto;
 
-import lombok.*;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class NamespaceDTO {
-    private Long id;
-    private String name;
-    private String description;
-}
+/** Namespace DTO converted to a record to remove Lombok dependency. */
+public record NamespaceDTO(Long id, String name, String description) {}

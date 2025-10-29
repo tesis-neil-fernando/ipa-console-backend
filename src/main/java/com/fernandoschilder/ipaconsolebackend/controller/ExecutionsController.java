@@ -3,7 +3,6 @@ package com.fernandoschilder.ipaconsolebackend.controller;
 import com.fernandoschilder.ipaconsolebackend.dto.ExecutionsListResponseDto;
 import com.fernandoschilder.ipaconsolebackend.service.ExecutionsService;
 import com.fernandoschilder.ipaconsolebackend.service.N8nApiService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,9 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/executions")
-@RequiredArgsConstructor
 public class ExecutionsController {
     private final ExecutionsService executionsService;
+
+    public ExecutionsController(ExecutionsService executionsService) {
+        this.executionsService = executionsService;
+    }
 
     @GetMapping
     public ResponseEntity<N8nApiService.ApiResponse<ExecutionsListResponseDto>> list(
