@@ -3,18 +3,22 @@ package com.fernandoschilder.ipaconsolebackend.startup;
 import com.fernandoschilder.ipaconsolebackend.model.UserEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
 import com.fernandoschilder.ipaconsolebackend.service.WorkflowSyncService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class StartupInitializerDev implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final WorkflowSyncService workflowSyncService;
     private final PasswordEncoder encoder;
+
+    public StartupInitializerDev(UserRepository userRepository, WorkflowSyncService workflowSyncService, PasswordEncoder encoder) {
+        this.userRepository = userRepository;
+        this.workflowSyncService = workflowSyncService;
+        this.encoder = encoder;
+    }
 
     @Override
     public void run(String... args) throws Exception {

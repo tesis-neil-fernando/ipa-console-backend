@@ -4,14 +4,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.*;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "tags")
 public class TagEntity {
@@ -28,6 +24,48 @@ public class TagEntity {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
+    public TagEntity() {
+    }
+
+    public TagEntity(String id, String name, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+        this.id = id;
+        this.name = name;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(OffsetDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -35,6 +73,9 @@ public class TagEntity {
         TagEntity that = (TagEntity) o;
         return Objects.equals(id, that.id);
     }
+
     @Override
-    public int hashCode() { return Objects.hash(id); }
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

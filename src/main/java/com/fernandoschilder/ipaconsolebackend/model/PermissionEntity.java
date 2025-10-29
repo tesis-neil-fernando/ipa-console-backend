@@ -2,13 +2,9 @@ package com.fernandoschilder.ipaconsolebackend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import java.util.Objects;
 import java.util.Set;
 
-@Data
-@NoArgsConstructor
-@RequiredArgsConstructor
-@EqualsAndHashCode(of = "id")
 @Entity
 @Table(name = "permissions")
 public class PermissionEntity {
@@ -18,7 +14,6 @@ public class PermissionEntity {
     @Column(name = "permission_id")
     private Long id;
 
-    @NonNull
     @Column(name = "type", unique = true, nullable = false, length = 100)
     private String type;   // "administrador", "visualizar", "ejecutar", "editar_parametros", etc.
 
@@ -36,4 +31,56 @@ public class PermissionEntity {
             inverseJoinColumns = @JoinColumn(name = "namespace_id")
     )
     private Set<NamespaceEntity> permission_namespaces;
+
+    public PermissionEntity() {
+    }
+
+    public PermissionEntity(String type) {
+        this.type = type;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public Set<RoleEntity> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<RoleEntity> roles) {
+        this.roles = roles;
+    }
+
+    public Set<NamespaceEntity> getPermission_namespaces() {
+        return permission_namespaces;
+    }
+
+    public void setPermission_namespaces(Set<NamespaceEntity> permission_namespaces) {
+        this.permission_namespaces = permission_namespaces;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PermissionEntity that = (PermissionEntity) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

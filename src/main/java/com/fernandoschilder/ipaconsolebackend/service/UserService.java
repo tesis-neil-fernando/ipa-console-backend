@@ -30,6 +30,8 @@ public class UserService {
     private RoleRepository roleRepository;   // ← necesario para setUserRoles
     @Autowired
     private PasswordEncoder encoder;
+    @Autowired
+    private com.fernandoschilder.ipaconsolebackend.mapper.UserMapper userMapper;
 
     /* =================== CRUD BÁSICO =================== */
 
@@ -45,15 +47,15 @@ public class UserService {
     }
 
     public UserViewDTO createUser(UserCreateDto dto) {
-        if (userRepository.existsByUsername(dto.getUsername())) {
-            throw new EntityExistsException("Username " + dto.getUsername() + " already exists");
+        if (userRepository.existsByUsername(dto.username())) {
+            throw new EntityExistsException("Username " + dto.username() + " already exists");
         }
         UserEntity entity = new UserEntity();
-        entity.setUsername(dto.getUsername());
-        entity.setPassword(encoder.encode(dto.getPassword()));
+        entity.setUsername(dto.username());
+        entity.setPassword(encoder.encode(dto.password()));
         entity.setEnabled(true);
-        UserEntity saved = userRepository.save(entity);
-        return toViewDTO(saved);
+    UserEntity saved = userRepository.save(entity);
+    return userMapper.toViewDTO(saved);
     }
 
     public UserEntity getUserByUsername(String username) {
@@ -84,17 +86,17 @@ public class UserService {
             spec = spec.and(UserSpecifications.hasRole(role));
         }
 
-        return userRepository.findAll(spec, pageable).map(this::toViewDTO);
+    return userRepository.findAll(spec, pageable).map(userMapper::toViewDTO);
     }
 
     /* =================== ACCIONES DE NEGOCIO =================== */
 
     @Transactional
     public UserViewDTO updateEnabled(Long id, boolean enabled) {
-        UserEntity user = userRepository.findById(id)
+    UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User with id " + id + " not found"));
-        user.setEnabled(enabled);
-        return toViewDTO(userRepository.save(user));
+    user.setEnabled(enabled);
+    return userMapper.toViewDTO(userRepository.save(user));
     }
 
     @Transactional
@@ -114,44 +116,16 @@ public class UserService {
         }
 
         user.setUser_roles(roles);
-        userRepository.save(user);
-        return toViewDTO(user);
+    userRepository.save(user);
+    return userMapper.toViewDTO(user);
     }
 
     public UserViewDTO getUserView(String username) {
-        UserEntity e = getUserByUsername(username);
-        return toViewDTO(e);
+    UserEntity e = getUserByUsername(username);
+    return userMapper.toViewDTO(e);
     }
 
     /* =================== MAPPER (incluye namespaces) =================== */
 
-    private UserViewDTO toViewDTO(UserEntity e) {
-
-        // Roles como strings
-        Set<String> roles = (e.getUser_roles() == null) ? Set.of()
-                : e.getUser_roles().stream()
-                .filter(Objects::nonNull)
-                .map(RoleEntity::getName)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-
-        // Namespaces efectivos: role -> permissions -> permission_namespaces -> name
-        Set<String> namespaces =
-                Optional.ofNullable(e.getUser_roles()).orElse(Set.of()).stream()
-                        .filter(Objects::nonNull)
-                        .flatMap(r -> Optional.ofNullable(r.getPermissions()).orElse(Set.of()).stream())
-                        .filter(Objects::nonNull)
-                        .flatMap(p -> Optional.ofNullable(p.getPermission_namespaces()).orElse(Set.of()).stream())
-                        .filter(Objects::nonNull)
-                        .map(ns -> ns.getName())
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toCollection(LinkedHashSet::new));
-
-        return UserViewDTO.builder()
-                .id(e.getId())
-                .username(e.getUsername())
-                .enabled(e.isEnabled())
-                .roles(roles)
-                .namespaces(namespaces)   // <— nuevo campo en el DTO
-                .build();
-    }
+    
 }

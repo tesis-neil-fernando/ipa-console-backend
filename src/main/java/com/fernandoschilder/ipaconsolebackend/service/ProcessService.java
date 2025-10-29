@@ -10,7 +10,7 @@ import com.fernandoschilder.ipaconsolebackend.model.ProcessEntity;
 import com.fernandoschilder.ipaconsolebackend.model.WorkflowEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.WorkflowRepository;
 import com.fernandoschilder.ipaconsolebackend.repository.ProcessRepository;
-import com.fernandoschilder.ipaconsolebackend.utils.ProcessMapper;
+import com.fernandoschilder.ipaconsolebackend.mapper.ProcessMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class ProcessService {
 
     private final ProcessRepository processRepository;
@@ -30,6 +29,16 @@ public class ProcessService {
     private final N8nApiService n8nApiService;
     private final N8nWebhookService n8nWebhookService;
     private final ObjectMapper objectMapper;
+    private final ProcessMapper processMapper;
+
+    public ProcessService(ProcessRepository processRepository, WorkflowRepository workflowRepository, N8nApiService n8nApiService, N8nWebhookService n8nWebhookService, ObjectMapper objectMapper, ProcessMapper processMapper) {
+        this.processRepository = processRepository;
+        this.workflowRepository = workflowRepository;
+        this.n8nApiService = n8nApiService;
+        this.n8nWebhookService = n8nWebhookService;
+        this.objectMapper = objectMapper;
+        this.processMapper = processMapper;
+    }
 
     @Transactional
     public ProcessEntity ensureProcessForWorkflow(WorkflowEntity workflow, String name, String description) {
@@ -71,7 +80,7 @@ public class ProcessService {
         }
 
         var saved = processRepository.saveAndFlush(process);
-        var dtoBase = ProcessMapper.toResponseDto(saved);
+    var dtoBase = processMapper.toResponseDto(saved);
         return enrichWithLastExecution(dtoBase);
     }
 
@@ -107,13 +116,13 @@ public class ProcessService {
     @Transactional(readOnly = true)
     public ProcessResponseDto get(Long id) {
         var p = processRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Process not found: " + id));
-        var dtoBase = ProcessMapper.toResponseDto(p);
+    var dtoBase = processMapper.toResponseDto(p);
         return enrichWithLastExecution(dtoBase);
     }
 
     @Transactional(readOnly = true)
     public List<ProcessResponseDto> list() {
-        return processRepository.findAll().stream().map(ProcessMapper::toResponseDto).map(this::enrichWithLastExecution).toList();
+    return processRepository.findAll().stream().map(processMapper::toResponseDto).map(this::enrichWithLastExecution).toList();
     }
 
     @Transactional
@@ -150,7 +159,7 @@ public class ProcessService {
 
         var reloaded = processRepository.findById(saved.getId()).orElseThrow(() -> new EntityNotFoundException("Process not found after update: " + saved.getId()));
 
-        var base = ProcessMapper.toResponseDto(reloaded);
+    var base = processMapper.toResponseDto(reloaded);
         return enrichWithLastExecution(base);
     }
 

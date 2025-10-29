@@ -1,13 +1,10 @@
 package com.fernandoschilder.ipaconsolebackend.model;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.time.Instant;
+import java.util.Objects;
 
-@Data
-@RequiredArgsConstructor
-@NoArgsConstructor
 @Entity
 @Table(name = "logs")
 public class LogEntity {
@@ -15,20 +12,93 @@ public class LogEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "log_id")
     private Long id;
-    @NonNull
+
     @Column(name = "time")
     private Instant time;
-    @NonNull
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "process_id", nullable = false)
     private ProcessEntity process;
-    @NonNull
+
     @Column(name = "initiator")
     private String initiator;
-    @NonNull
+
     @Column(name = "state")
     private String state;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity user;
+
+    public LogEntity() {
+    }
+
+    public LogEntity(Instant time, ProcessEntity process, String initiator, String state, UserEntity user) {
+        this.time = time;
+        this.process = process;
+        this.initiator = initiator;
+        this.state = state;
+        this.user = user;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Instant getTime() {
+        return time;
+    }
+
+    public void setTime(Instant time) {
+        this.time = time;
+    }
+
+    public ProcessEntity getProcess() {
+        return process;
+    }
+
+    public void setProcess(ProcessEntity process) {
+        this.process = process;
+    }
+
+    public String getInitiator() {
+        return initiator;
+    }
+
+    public void setInitiator(String initiator) {
+        this.initiator = initiator;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public UserEntity getUser() {
+        return user;
+    }
+
+    public void setUser(UserEntity user) {
+        this.user = user;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LogEntity logEntity = (LogEntity) o;
+        return Objects.equals(id, logEntity.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

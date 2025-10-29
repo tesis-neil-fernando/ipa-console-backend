@@ -1,15 +1,11 @@
 package com.fernandoschilder.ipaconsolebackend.model;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@Getter @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @Entity
 @Table(name = "workflows")
 public class WorkflowEntity {
@@ -37,6 +33,74 @@ public class WorkflowEntity {
     )
     private Set<TagEntity> tags = new HashSet<>();
 
+    public WorkflowEntity() {
+    }
+
+    public WorkflowEntity(String id, String name, boolean active, boolean archived, String rawJson) {
+        this.id = id;
+        this.name = name;
+        this.active = active;
+        this.archived = archived;
+        this.rawJson = rawJson;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public boolean isArchived() {
+        return archived;
+    }
+
+    public void setArchived(boolean archived) {
+        this.archived = archived;
+    }
+
+    public String getRawJson() {
+        return rawJson;
+    }
+
+    public void setRawJson(String rawJson) {
+        this.rawJson = rawJson;
+    }
+
+    public ProcessEntity getProcess() {
+        return process;
+    }
+
+    public void setProcess(ProcessEntity p) {
+        this.process = p;
+        if (p != null) p.setWorkflow(this);
+    }
+
+    public Set<TagEntity> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<TagEntity> tags) {
+        this.tags = tags;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -44,12 +108,10 @@ public class WorkflowEntity {
         WorkflowEntity that = (WorkflowEntity) o;
         return Objects.equals(id, that.id);
     }
-    @Override
-    public int hashCode() { return Objects.hash(id); }
 
-    public void setProcess(ProcessEntity p) {
-        this.process = p;
-        if (p != null) p.setWorkflow(this);
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
 }
