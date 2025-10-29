@@ -37,6 +37,11 @@ public class ProcessController {
         return ResponseEntity.ok(processService.list());
     }
 
+    @PostMapping("/{id}/start")
+    public ResponseEntity<?> start(@PathVariable Long id) {
+        return processService.start(id);
+    }
+
     @PatchMapping("/{id}")
     public ProcessResponseDto update(@PathVariable Long id, @RequestBody @Valid ProcessUpdateDto dto) {
         return processService.update(id, dto);

@@ -12,10 +12,13 @@ import com.fernandoschilder.ipaconsolebackend.repository.ProcessRepository;
 import com.fernandoschilder.ipaconsolebackend.utils.ProcessMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class ProcessService {
     private final ProcessRepository processRepository;
     private final WorkflowRepository workflowRepository;
     private final N8nApiService n8nApiService;
+    private final N8nWebhookService n8nWebhookService;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -52,6 +56,32 @@ public class ProcessService {
         return enrichWithLastExecution(dtoBase);
     }
 
+    @Transactional
+    public ResponseEntity<?> start(Long id) {
+
+        ProcessEntity process = processRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Process not found: " + id));
+
+        String workflowId = process.getWorkflow() != null ? process.getWorkflow().getId() : null;
+        if (workflowId == null || workflowId.isBlank()) {
+            throw new EntityNotFoundException("Process " + id + " has no workflowId");
+        }
+
+        // Optional: pass parameters, or null if you want a clean forward
+        Map<String, Object> body = Map.of(
+                "processId", id,
+                "parameters", process.getParameters() == null
+                        ? Map.of()
+                        : process.getParameters().stream()
+                        .collect(Collectors.toMap(
+                                ParameterEntity::getName,
+                                ParameterEntity::getValue,
+                                (a,b) -> b
+                        ))
+        );
+
+        return n8nWebhookService.postWebhook(workflowId, body);
+    }
 
 
     @Transactional(readOnly = true)
