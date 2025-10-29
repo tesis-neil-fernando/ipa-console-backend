@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Objects; // <-- añade este import
 
 @Service
 public class UserService {
@@ -58,7 +59,6 @@ public class UserService {
     /* =================== LISTADO / FILTROS =================== */
 
     public Page<UserViewDTO> listUsers(String q, Boolean enabled, String role, Pageable pageable) {
-        // Especificación “verdadera” inicial (sin deprecaciones)
         Specification<UserEntity> spec = (root, query, cb) -> cb.conjunction();
 
         if (q != null && !q.isBlank()) {
@@ -76,7 +76,6 @@ public class UserService {
 
     /* =================== ACCIONES DE NEGOCIO =================== */
 
-    /** Activa / desactiva un usuario por ID. */
     @Transactional
     public UserViewDTO updateEnabled(Long id, boolean enabled) {
         UserEntity user = userRepository.findById(id)
@@ -85,17 +84,14 @@ public class UserService {
         return toViewDTO(userRepository.save(user));
     }
 
-    /** Reemplaza completamente los roles de un usuario por los provistos. */
     @Transactional
     public UserViewDTO setUserRoles(String username, Set<String> roleNames) {
         UserEntity user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("UserEntity Not Found with username: " + username));
 
-        // Traemos los roles existentes por nombre
         List<RoleEntity> found = roleRepository.findByNameIn(roleNames == null ? Set.of() : roleNames);
         Set<RoleEntity> roles = new HashSet<>(found);
 
-        // Validación de faltantes
         Set<String> foundNames = roles.stream().map(RoleEntity::getName).collect(Collectors.toSet());
         Set<String> missing = Optional.ofNullable(roleNames).orElse(Set.of()).stream()
                 .filter(rn -> !foundNames.contains(rn))
@@ -108,22 +104,41 @@ public class UserService {
         userRepository.save(user);
         return toViewDTO(user);
     }
+
     public UserViewDTO getUserView(String username) {
         UserEntity e = getUserByUsername(username);
-        return toViewDTO(e); // ya lo tienes para el listado
+        return toViewDTO(e);
     }
 
-    /* =================== MAPPER =================== */
+    /* =================== MAPPER (incluye namespaces) =================== */
 
     private UserViewDTO toViewDTO(UserEntity e) {
+
+        // Roles como strings
+        Set<String> roles = (e.getUser_roles() == null) ? Set.of()
+                : e.getUser_roles().stream()
+                .filter(Objects::nonNull)
+                .map(RoleEntity::getName)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        // Namespaces efectivos: role -> permissions -> permission_namespaces -> name
+        Set<String> namespaces =
+                Optional.ofNullable(e.getUser_roles()).orElse(Set.of()).stream()
+                        .filter(Objects::nonNull)
+                        .flatMap(r -> Optional.ofNullable(r.getPermissions()).orElse(Set.of()).stream())
+                        .filter(Objects::nonNull)
+                        .flatMap(p -> Optional.ofNullable(p.getPermission_namespaces()).orElse(Set.of()).stream())
+                        .filter(Objects::nonNull)
+                        .map(ns -> ns.getName())
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+
         return UserViewDTO.builder()
                 .id(e.getId())
                 .username(e.getUsername())
                 .enabled(e.isEnabled())
-                .roles(e.getUser_roles() == null ? Set.of()
-                        : e.getUser_roles().stream()
-                        .map(RoleEntity::getName)
-                        .collect(Collectors.toCollection(LinkedHashSet::new)))
+                .roles(roles)
+                .namespaces(namespaces)   // <— nuevo campo en el DTO
                 .build();
     }
 }

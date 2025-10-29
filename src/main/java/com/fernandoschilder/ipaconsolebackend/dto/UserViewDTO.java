@@ -17,4 +17,5 @@ public class UserViewDTO {
     private String username;
     private boolean enabled;
     private Set<String> roles; // nombres de rol
+    private Set<String> namespaces;
 }
