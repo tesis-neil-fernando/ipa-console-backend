@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.*;
 import com.fernandoschilder.ipaconsolebackend.dto.AssignNamespacesDTO;
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
+import java.net.URI;
+
 @RestController
 @RequestMapping("/permissions")
 @RequiredArgsConstructor
@@ -16,8 +19,9 @@ public class PermissionController {
 
     // Crear permiso (type único)
     @PostMapping
-    public PermissionEntity create(@RequestBody CreatePermissionDTO req) {
-        return permissionService.createPermission(req.type());
+    public ResponseEntity<PermissionEntity> create(@RequestBody CreatePermissionDTO req) {
+        PermissionEntity created = permissionService.createPermission(req.type());
+        return ResponseEntity.created(URI.create("/permissions/" + created.getType())).body(created);
     }
 
     // Listar todos los permisos
@@ -31,7 +35,7 @@ public class PermissionController {
     public PermissionEntity get(@PathVariable String type) {
         return permissionService.getByType(type);
     }
-    @PutMapping("/permissions/{type}/namespaces")
+    @PutMapping("/{type}/namespaces")
     public PermissionEntity assignNamespacesToPermission(
             @PathVariable String type,
             @RequestBody AssignNamespacesDTO body) {

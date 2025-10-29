@@ -4,7 +4,8 @@ import com.fernandoschilder.ipaconsolebackend.model.RoleEntity;
 import com.fernandoschilder.ipaconsolebackend.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.http.ResponseEntity;
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -16,8 +17,9 @@ public class RoleController {
 
     // Crear rol
     @PostMapping
-    public RoleEntity create(@RequestBody CreateRoleDTO req) {
-        return roleService.createRole(req.name(), req.description());
+    public ResponseEntity<RoleEntity> create(@RequestBody CreateRoleDTO req) {
+        RoleEntity created = roleService.createRole(req.name(), req.description());
+        return ResponseEntity.created(URI.create("/roles/" + created.getName())).body(created);
     }
 
     // Listar roles

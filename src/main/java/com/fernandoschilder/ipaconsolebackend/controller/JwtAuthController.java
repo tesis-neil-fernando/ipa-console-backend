@@ -1,13 +1,10 @@
 package com.fernandoschilder.ipaconsolebackend.controller;
 
-import java.io.UnsupportedEncodingException;
-
 import com.fernandoschilder.ipaconsolebackend.dto.JwtResponse;
-import com.fernandoschilder.ipaconsolebackend.model.UserEntity;
 import com.fernandoschilder.ipaconsolebackend.utils.JwtUtils;
 import com.fernandoschilder.ipaconsolebackend.dto.LoginRequest;
 import com.fernandoschilder.ipaconsolebackend.security.UserDetailsImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,11 +22,14 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequestMapping("/auth")
 public class JwtAuthController {
 
-    @Autowired
-    AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    JwtUtils jwtUtils;
+    private final JwtUtils jwtUtils;
+
+    public JwtAuthController(AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
+        this.authenticationManager = authenticationManager;
+        this.jwtUtils = jwtUtils;
+    }
 
 
     @PostMapping("/signin")
@@ -49,6 +49,9 @@ public class JwtAuthController {
 
     @GetMapping("/valid")
     public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing or invalid Authorization header");
+        }
         String token = authHeader.substring("Bearer ".length());
         if (jwtUtils.validateJwtToken(token)) {
             return ResponseEntity.ok().body(true);

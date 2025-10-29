@@ -47,8 +47,4 @@ public class ProcessController {
         return processService.update(id, dto);
     }
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> handleNotFound(EntityNotFoundException ex) {
-        return ResponseEntity.status(404).body(ex.getMessage());
-    }
 }
