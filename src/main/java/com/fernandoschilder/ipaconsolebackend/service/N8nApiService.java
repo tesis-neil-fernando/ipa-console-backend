@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import java.time.Duration;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -34,8 +35,9 @@ public class N8nApiService {
                             cr -> cr.bodyToMono(String.class)
                                     .map(body -> new RuntimeException("Error al obtener workflows (" + cr.statusCode() + "): " + body))
                     )
-                    .bodyToMono(String.class)
-                    .block();
+            .bodyToMono(String.class)
+            .timeout(Duration.ofSeconds(10))
+            .block();
 
             return ResponseEntity.ok(new ApiResponse<>(true, "Workflows obtenidos correctamente", response));
 
@@ -59,8 +61,9 @@ public class N8nApiService {
                             cr -> cr.bodyToMono(String.class)
                                     .map(body -> new RuntimeException("Error al obtener workflows (" + cr.statusCode() + "): " + body))
                     )
-                    .bodyToMono(String.class)
-                    .block();
+            .bodyToMono(String.class)
+            .timeout(Duration.ofSeconds(10))
+            .block();
 
             var envelope = objectMapper.readValue(response, N8nWorkflowsEnvelope.class);
             return ResponseEntity.ok(new ApiResponse<>(true, "Workflows obtenidos correctamente", envelope));
@@ -95,6 +98,7 @@ public class N8nApiService {
                                     .map(body -> new RuntimeException("Error al obtener ejecuciones (" + cr.statusCode() + "): " + body))
                     )
                     .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(10))
                     .block();
 
             return ResponseEntity.ok(new ApiResponse<>(true, "Ejecuciones obtenidas correctamente", response));
@@ -130,6 +134,7 @@ public class N8nApiService {
                                     .map(body -> new RuntimeException("Error al obtener ejecuciones (" + cr.statusCode() + "): " + body))
                     )
                     .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(10))
                     .block();
 
             var envelope = objectMapper.readValue(response, N8nExecutionsEnvelope.class);
@@ -154,8 +159,9 @@ public class N8nApiService {
                             cr -> cr.bodyToMono(String.class)
                                     .map(body -> new RuntimeException("Error al obtener workflows (" + cr.statusCode() + "): " + body))
                     )
-                    .bodyToMono(String.class)
-                    .block();
+            .bodyToMono(String.class)
+            .timeout(Duration.ofSeconds(10))
+            .block();
 
             var envelope = objectMapper.readValue(response, N8nWorkflowsEnvelope.class);
             return envelope;
@@ -193,6 +199,7 @@ public class N8nApiService {
                                     .map(body -> new RuntimeException("Error al obtener ejecuciones (" + cr.statusCode() + "): " + body))
                     )
                     .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(10))
                     .block();
 
             var envelope = objectMapper.readValue(response, N8nExecutionsEnvelope.class);
@@ -220,8 +227,9 @@ public class N8nApiService {
                                     .map(body -> new RuntimeException(
                                             "Error al activar workflow (" + clientResponse.statusCode() + "): " + body))
                     )
-                    .bodyToMono(String.class)
-                    .block();
+            .bodyToMono(String.class)
+            .timeout(Duration.ofSeconds(10))
+            .block();
 
             return ResponseEntity.ok(new ApiResponse<>(true, "Workflow activado correctamente", response));
 
@@ -246,8 +254,9 @@ public class N8nApiService {
                                     .map(body -> new RuntimeException(
                                             "Error al desactivar workflow (" + clientResponse.statusCode() + "): " + body))
                     )
-                    .bodyToMono(String.class)
-                    .block();
+            .bodyToMono(String.class)
+            .timeout(Duration.ofSeconds(10))
+            .block();
 
             return ResponseEntity.ok(new ApiResponse<>(true, "Workflow desactivado correctamente", response));
 

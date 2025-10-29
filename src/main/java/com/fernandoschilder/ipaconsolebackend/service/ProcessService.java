@@ -108,7 +108,10 @@ public class ProcessService {
                         ))
         );
 
-        return n8nWebhookService.postWebhook(workflowId, body);
+        // Use the low-level throwing API so failures are surfaced as exceptions
+        // and handled by the existing GlobalExceptionHandler in the controller layer.
+        String response = n8nWebhookService.postWebhookRaw(workflowId, body);
+        return ResponseEntity.ok(new N8nApiService.ApiResponse<>(true, "Webhook ejecutado", response));
     }
 
 
