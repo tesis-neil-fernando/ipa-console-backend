@@ -2,8 +2,10 @@ package com.fernandoschilder.ipaconsolebackend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fernandoschilder.ipaconsolebackend.model.TagEntity;
 import com.fernandoschilder.ipaconsolebackend.model.WorkflowEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.N8nWorkflowRepository;
+import com.fernandoschilder.ipaconsolebackend.repository.TagRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
+
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -20,11 +24,11 @@ public class WorkflowSyncService {
 
     private final N8nApiService n8nService;
     private final N8nWorkflowRepository workflowRepository;
-    private final ObjectMapper objectMapper = new ObjectMapper(); // serializa/parsea JSON
+    private final TagRepository tagRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
     public SyncSummary pullAndSave() {
-        // Llama al servicio que ya maneja errores y formato uniforme
         ResponseEntity<N8nApiService.ApiResponse<String>> resp = n8nService.getWorkflowsRaw();
         N8nApiService.ApiResponse<String> body = resp.getBody();
 
@@ -34,26 +38,75 @@ public class WorkflowSyncService {
         }
 
         try {
-            JsonNode root = objectMapper.readTree(body.getData()); // body.getData() es el JSON crudo de n8n
+            JsonNode root = objectMapper.readTree(body.getData());
             JsonNode data = root.path("data");
             if (!data.isArray()) {
                 return new SyncSummary(0, 0, 0);
             }
 
-            // Parseo a entidades
+            // 1) Reunir TODAS las tags entrantes (para minim. roundtrips)
+            Map<String, TagEntity> incomingTagsMap = new HashMap<>();
+            for (JsonNode wfNode : data) {
+                JsonNode tagsNode = wfNode.path("tags");
+                if (tagsNode.isArray()) {
+                    for (JsonNode t : tagsNode) {
+                        String tagId = t.path("id").asText(null);
+                        if (tagId == null) continue;
+                        TagEntity tag = incomingTagsMap.computeIfAbsent(tagId, id -> new TagEntity());
+                        tag.setId(tagId);
+                        tag.setName(t.path("name").asText(null));
+                        tag.setCreatedAt(parseDate(t.path("createdAt").asText(null)));
+                        tag.setUpdatedAt(parseDate(t.path("updatedAt").asText(null)));
+                    }
+                }
+            }
+
+            // 2) Upsert de tags (cargar existentes y fusionar)
+            if (!incomingTagsMap.isEmpty()) {
+                List<TagEntity> existing = tagRepository.findAllById(incomingTagsMap.keySet());
+                for (TagEntity ex : existing) {
+                    TagEntity in = incomingTagsMap.get(ex.getId());
+                    if (in != null) {
+                        ex.setName(in.getName());
+                        ex.setCreatedAt(in.getCreatedAt());
+                        ex.setUpdatedAt(in.getUpdatedAt());
+                        incomingTagsMap.put(ex.getId(), ex); // asegurar instancia gestionada
+                    }
+                }
+                // Guardar nuevas (las que aún no existen gestionadas)
+                List<TagEntity> toCreate = incomingTagsMap.values().stream()
+                        .filter(t -> t.getCreatedAt() == null || existing.stream().noneMatch(e -> e.getId().equals(t.getId())))
+                        .toList();
+                if (!toCreate.isEmpty()) tagRepository.saveAll(toCreate);
+            }
+
+            // 3) Construir workflows y asignar sus tags gestionadas
             List<WorkflowEntity> entities = new ArrayList<>();
             for (JsonNode wfNode : data) {
                 WorkflowEntity e = new WorkflowEntity();
                 e.setId(wfNode.path("id").asText());
                 e.setName(wfNode.path("name").asText());
                 e.setActive(wfNode.path("active").asBoolean());
-                // En n8n viene como isArchived; en la entidad lo guardamos como archived
                 e.setArchived(wfNode.path("isArchived").asBoolean());
                 e.setRawJson(wfNode.toString());
+
+                Set<TagEntity> tagSet = new HashSet<>();
+                JsonNode tagsNode = wfNode.path("tags");
+                if (tagsNode.isArray()) {
+                    for (JsonNode t : tagsNode) {
+                        String tagId = t.path("id").asText(null);
+                        if (tagId == null) continue;
+                        TagEntity managed = tagRepository.findById(tagId)
+                                .orElseGet(() -> incomingTagsMap.get(tagId)); // ya debería estar
+                        if (managed != null) tagSet.add(managed);
+                    }
+                }
+                e.setTags(tagSet);
+
                 entities.add(e);
             }
 
-            // Calculamos creados vs actualizados
+            // 4) Calcular creados/actualizados y guardar workflows
             Set<String> incomingIds = entities.stream().map(WorkflowEntity::getId).collect(Collectors.toSet());
             Set<String> existingIds = new HashSet<>();
             workflowRepository.findAllById(incomingIds).forEach(w -> existingIds.add(w.getId()));
@@ -61,7 +114,6 @@ public class WorkflowSyncService {
             int toUpdate = (int) entities.stream().filter(w -> existingIds.contains(w.getId())).count();
             int toCreate = entities.size() - toUpdate;
 
-            // Upsert simple
             workflowRepository.saveAll(entities);
 
             return new SyncSummary(entities.size(), toCreate, toUpdate);
@@ -69,6 +121,11 @@ public class WorkflowSyncService {
         } catch (Exception e) {
             throw new RuntimeException("Error procesando workflows", e);
         }
+    }
+
+    private static OffsetDateTime parseDate(String s) {
+        if (s == null) return null;
+        try { return OffsetDateTime.parse(s); } catch (Exception ignored) { return null; }
     }
 
     @Data

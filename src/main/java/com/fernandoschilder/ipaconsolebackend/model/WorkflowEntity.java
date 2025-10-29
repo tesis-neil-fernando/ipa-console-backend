@@ -3,6 +3,8 @@ package com.fernandoschilder.ipaconsolebackend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Getter @Setter
@@ -14,12 +16,34 @@ public class WorkflowEntity {
     @Id
     @Column(length = 64, name = "workflow_id")
     private String id;
+
     private String name;
     private boolean active;
+
     @Column(name = "is_archived")
     private boolean archived;
+
     @Column(name = "raw_json", columnDefinition = "text")
     private String rawJson;
+
     @OneToMany(mappedBy = "workflow")
-    private Set<ProcessEntity> processes;
+    private Set<ProcessEntity> processes = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "workflow_tags",
+            joinColumns = @JoinColumn(name = "workflow_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<TagEntity> tags = new HashSet<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof WorkflowEntity)) return false;
+        WorkflowEntity that = (WorkflowEntity) o;
+        return Objects.equals(id, that.id);
+    }
+    @Override
+    public int hashCode() { return Objects.hash(id); }
 }

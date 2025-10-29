@@ -3,6 +3,9 @@ package com.fernandoschilder.ipaconsolebackend.utils;
 import com.fernandoschilder.ipaconsolebackend.dto.*;
 import com.fernandoschilder.ipaconsolebackend.model.*;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public final class ProcessMapper {
 
     private ProcessMapper() {}
@@ -10,13 +13,17 @@ public final class ProcessMapper {
     // -- Workflow
     public static WorkflowResponseDto toWorkflowDto(WorkflowEntity w) {
         if (w == null) return null;
+        Set<TagResponseDto> tagDtos = w.getTags().stream()
+                .map(t -> new TagResponseDto(t.getId(), t.getName()))
+                .collect(Collectors.toSet());
 
         return new WorkflowResponseDto(
                 w.getId(),
                 w.getName(),
                 w.isActive(),
                 w.isArchived(),
-                null
+                null,
+                tagDtos
         );
     }
 
