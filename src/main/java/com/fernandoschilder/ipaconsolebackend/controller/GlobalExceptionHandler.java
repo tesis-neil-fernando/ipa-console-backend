@@ -24,6 +24,9 @@ import org.springframework.security.core.AuthenticationException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -60,14 +63,57 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(N8nClientException.class)
     public ResponseEntity<ErrorResponse> handleN8nFailure(N8nClientException ex, HttpServletRequest request) {
-        // Log the root cause for diagnostics
-        log.error("n8n client error: {}", ex.getMessage(), ex);
         int sc = ex.getStatusCode();
         HttpStatus status = null;
-        if (sc >= 400 && sc < 600) status = HttpStatus.resolve(sc);
+        Map<String, String> details = null;
+
+        // If the exception already carries a valid HTTP status, use it.
+        if (sc >= 400 && sc < 600) {
+            status = HttpStatus.resolve(sc);
+        }
+
+        // If the exception exposes an upstream body directly, use it (factory sets it).
+        if (ex instanceof com.fernandoschilder.ipaconsolebackend.service.N8nClientException && ((com.fernandoschilder.ipaconsolebackend.service.N8nClientException) ex).getUpstreamBody() != null) {
+            String ub = ((com.fernandoschilder.ipaconsolebackend.service.N8nClientException) ex).getUpstreamBody();
+            details = new HashMap<>();
+            details.put("upstreamBody", ub);
+        }
+
+        // If no status was set, inspect the cause for WebClientResponseException to extract upstream status/body
+        if (status == null) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof WebClientResponseException wre) {
+                int upstream = wre.getRawStatusCode();
+                status = HttpStatus.resolve(upstream);
+                if (status == null) status = HttpStatus.BAD_GATEWAY;
+                try {
+                    String body = wre.getResponseBodyAsString();
+                    if (body != null && !body.isBlank()) {
+                        if (details == null) details = new HashMap<>();
+                        details.put("upstreamBody", body);
+                    }
+                } catch (Exception ignored) {
+                    // ignore
+                }
+            }
+        }
+
         if (status == null) status = HttpStatus.BAD_GATEWAY;
+
+        // Log according to severity: don't print full stacktrace for client (4xx) upstream errors
+        if (status.is5xxServerError()) {
+            log.error("n8n client error: {}", ex.getMessage(), ex);
+        } else {
+            // expected client errors (4xx) - warn without stacktrace to avoid noisy console traces
+            log.warn("n8n client error (status={}): {}", status.value(), ex.getMessage());
+            if (details != null && details.containsKey("upstreamBody")) {
+                // still log upstream body at debug level for diagnostics
+                log.debug("n8n upstream body: {}", details.get("upstreamBody"));
+            }
+        }
+
         String msg = "Error contacting n8n: " + ex.getMessage();
-        var resp = build(status, msg, request.getRequestURI());
+        var resp = (details == null) ? build(status, msg, request.getRequestURI()) : build(status, msg, request.getRequestURI(), details);
         return ResponseEntity.status(status).body(resp);
     }
 
@@ -127,6 +173,31 @@ public class GlobalExceptionHandler {
         log.info("Authentication failure for request {}: {}", request.getRequestURI(), ex.getMessage());
         var resp = build(HttpStatus.UNAUTHORIZED, "Authentication failed: " + ex.getMessage(), request.getRequestURI());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(resp);
+    }
+
+    @ExceptionHandler(WebClientResponseException.class)
+    public ResponseEntity<ErrorResponse> handleWebClientResponse(WebClientResponseException ex, HttpServletRequest request) {
+        // Upstream HTTP error from WebClient. Map the upstream status and include body if available.
+        HttpStatus status = HttpStatus.resolve(ex.getRawStatusCode());
+        if (status == null) status = HttpStatus.BAD_GATEWAY;
+        log.error("Upstream HTTP error calling external service: {} - {}", ex.getRawStatusCode(), ex.getMessage());
+        Map<String, String> details = new HashMap<>();
+        try {
+            String body = ex.getResponseBodyAsString();
+            if (body != null && !body.isBlank()) details.put("upstreamBody", body);
+        } catch (Exception ignore) {
+            // ignore reading body errors
+        }
+        var resp = build(status, "Upstream service error: " + ex.getMessage(), request.getRequestURI(), details.isEmpty() ? null : details);
+        return ResponseEntity.status(status).body(resp);
+    }
+
+    @ExceptionHandler({WebClientRequestException.class, WebClientException.class})
+    public ResponseEntity<ErrorResponse> handleWebClientClientError(Exception ex, HttpServletRequest request) {
+        // Network/I/O errors when calling an upstream service: map to 502 Bad Gateway
+        log.error("WebClient communication error for request {}: {}", request.getRequestURI(), ex.getMessage());
+        var resp = build(HttpStatus.BAD_GATEWAY, "Upstream communication error: " + ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(resp);
     }
 
     @ExceptionHandler(Exception.class)

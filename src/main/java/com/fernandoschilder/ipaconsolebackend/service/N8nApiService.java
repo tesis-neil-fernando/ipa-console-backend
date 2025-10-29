@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import java.time.Duration;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class N8nApiService {
@@ -30,11 +32,13 @@ public class N8nApiService {
             String response = n8nClient.get()
                     .uri("/api/v1/workflows")
                     .retrieve()
-                    .onStatus(
-                            status -> status.is4xxClientError() || status.is5xxServerError(),
-                            cr -> cr.bodyToMono(String.class)
-                                    .map(body -> new RuntimeException("Error al obtener workflows (" + cr.statusCode() + "): " + body))
-                    )
+            .onStatus(
+                status -> status.is4xxClientError() || status.is5xxServerError(),
+                cr -> cr.bodyToMono(String.class)
+                    .map(body -> WebClientResponseException.create(
+                        cr.statusCode().value(), cr.statusCode().toString(), cr.headers().asHttpHeaders(),
+                        body == null ? null : body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8))
+            )
             .bodyToMono(String.class)
             .timeout(Duration.ofSeconds(10))
             .block();
@@ -56,11 +60,13 @@ public class N8nApiService {
             String response = n8nClient.get()
                     .uri("/api/v1/workflows")
                     .retrieve()
-                    .onStatus(
-                            status -> status.is4xxClientError() || status.is5xxServerError(),
-                            cr -> cr.bodyToMono(String.class)
-                                    .map(body -> new RuntimeException("Error al obtener workflows (" + cr.statusCode() + "): " + body))
-                    )
+            .onStatus(
+                status -> status.is4xxClientError() || status.is5xxServerError(),
+                cr -> cr.bodyToMono(String.class)
+                    .map(body -> WebClientResponseException.create(
+                        cr.statusCode().value(), cr.statusCode().toString(), cr.headers().asHttpHeaders(),
+                        body == null ? null : body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8))
+            )
             .bodyToMono(String.class)
             .timeout(Duration.ofSeconds(10))
             .block();
@@ -92,11 +98,13 @@ public class N8nApiService {
                         return u.build();
                     })
                     .retrieve()
-                    .onStatus(
-                            statusCode -> statusCode.is4xxClientError() || statusCode.is5xxServerError(),
-                            cr -> cr.bodyToMono(String.class)
-                                    .map(body -> new RuntimeException("Error al obtener ejecuciones (" + cr.statusCode() + "): " + body))
-                    )
+            .onStatus(
+                statusCode -> statusCode.is4xxClientError() || statusCode.is5xxServerError(),
+                cr -> cr.bodyToMono(String.class)
+                    .map(body -> WebClientResponseException.create(
+                        cr.statusCode().value(), cr.statusCode().toString(), cr.headers().asHttpHeaders(),
+                        body == null ? null : body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8))
+            )
                     .bodyToMono(String.class)
                     .timeout(Duration.ofSeconds(10))
                     .block();
@@ -128,11 +136,13 @@ public class N8nApiService {
                         return u.build();
                     })
                     .retrieve()
-                    .onStatus(
-                            statusCode -> statusCode.is4xxClientError() || statusCode.is5xxServerError(),
-                            cr -> cr.bodyToMono(String.class)
-                                    .map(body -> new RuntimeException("Error al obtener ejecuciones (" + cr.statusCode() + "): " + body))
-                    )
+            .onStatus(
+                statusCode -> statusCode.is4xxClientError() || statusCode.is5xxServerError(),
+                cr -> cr.bodyToMono(String.class)
+                    .map(body -> WebClientResponseException.create(
+                        cr.statusCode().value(), cr.statusCode().toString(), cr.headers().asHttpHeaders(),
+                        body == null ? null : body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8))
+            )
                     .bodyToMono(String.class)
                     .timeout(Duration.ofSeconds(10))
                     .block();
@@ -141,7 +151,27 @@ public class N8nApiService {
             return envelope;
 
         } catch (Exception e) {
-            log.error("Error fetching executions from n8n", e);
+            // Log less verbosely for expected upstream client errors
+            if (e instanceof WebClientResponseException wre) {
+                if (wre.getRawStatusCode() >= 500) {
+                    log.error("Error fetching executions from n8n", wre);
+                } else {
+                    log.warn("Error fetching executions from n8n: {}", wre.getMessage());
+                    try { log.debug("Upstream body: {}", wre.getResponseBodyAsString()); } catch (Exception ignore) {}
+                }
+                throw N8nClientException.from(wre);
+            }
+            if (e instanceof RuntimeException && e.getMessage() != null) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\((\\d{3})").matcher(e.getMessage());
+                if (m.find()) {
+                    try {
+                        int code = Integer.parseInt(m.group(1));
+                        throw new N8nClientException("Error al obtener ejecuciones: " + e.getMessage(), code, e);
+                    } catch (NumberFormatException ignored) {
+                        // fall through
+                    }
+                }
+            }
             throw new N8nClientException("Error al obtener ejecuciones: " + e.getMessage(), e);
         }
     }
@@ -154,11 +184,13 @@ public class N8nApiService {
             String response = n8nClient.get()
                     .uri("/api/v1/workflows")
                     .retrieve()
-                    .onStatus(
-                            status -> status.is4xxClientError() || status.is5xxServerError(),
-                            cr -> cr.bodyToMono(String.class)
-                                    .map(body -> new RuntimeException("Error al obtener workflows (" + cr.statusCode() + "): " + body))
-                    )
+            .onStatus(
+                status -> status.is4xxClientError() || status.is5xxServerError(),
+                cr -> cr.bodyToMono(String.class)
+                    .map(body -> WebClientResponseException.create(
+                        cr.statusCode().value(), cr.statusCode().toString(), cr.headers().asHttpHeaders(),
+                        body == null ? null : body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8))
+            )
             .bodyToMono(String.class)
             .timeout(Duration.ofSeconds(10))
             .block();
@@ -167,7 +199,26 @@ public class N8nApiService {
             return envelope;
 
         } catch (Exception e) {
-            log.error("Error fetching workflows from n8n", e);
+            if (e instanceof WebClientResponseException wre) {
+                if (wre.getRawStatusCode() >= 500) {
+                    log.error("Error fetching workflows from n8n", wre);
+                } else {
+                    log.warn("Error fetching workflows from n8n: {}", wre.getMessage());
+                    try { log.debug("Upstream body: {}", wre.getResponseBodyAsString()); } catch (Exception ignore) {}
+                }
+                throw N8nClientException.from(wre);
+            }
+            if (e instanceof RuntimeException && e.getMessage() != null) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\((\\d{3})").matcher(e.getMessage());
+                if (m.find()) {
+                    try {
+                        int code = Integer.parseInt(m.group(1));
+                        throw new N8nClientException("Error al obtener workflows: " + e.getMessage(), code, e);
+                    } catch (NumberFormatException ignored) {
+                        // fall through
+                    }
+                }
+            }
             throw new N8nClientException("Error al obtener workflows: " + e.getMessage(), e);
         }
     }
@@ -193,11 +244,13 @@ public class N8nApiService {
                         return u.build();
                     })
                     .retrieve()
-                    .onStatus(
-                            statusCode -> statusCode.is4xxClientError() || statusCode.is5xxServerError(),
-                            cr -> cr.bodyToMono(String.class)
-                                    .map(body -> new RuntimeException("Error al obtener ejecuciones (" + cr.statusCode() + "): " + body))
-                    )
+            .onStatus(
+                statusCode -> statusCode.is4xxClientError() || statusCode.is5xxServerError(),
+                cr -> cr.bodyToMono(String.class)
+                    .map(body -> WebClientResponseException.create(
+                        cr.statusCode().value(), cr.statusCode().toString(), cr.headers().asHttpHeaders(),
+                        body == null ? null : body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8))
+            )
                     .bodyToMono(String.class)
                     .timeout(Duration.ofSeconds(10))
                     .block();
@@ -221,12 +274,13 @@ public class N8nApiService {
                             .path("/api/v1/workflows/{id}/activate")
                             .build(workflowId))
                     .retrieve()
-                    .onStatus(
-                            status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> clientResponse.bodyToMono(String.class)
-                                    .map(body -> new RuntimeException(
-                                            "Error al activar workflow (" + clientResponse.statusCode() + "): " + body))
-                    )
+            .onStatus(
+                status -> status.is4xxClientError() || status.is5xxServerError(),
+                clientResponse -> clientResponse.bodyToMono(String.class)
+                    .map(body -> WebClientResponseException.create(
+                        clientResponse.statusCode().value(), clientResponse.statusCode().toString(), clientResponse.headers().asHttpHeaders(),
+                        body == null ? null : body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8))
+            )
             .bodyToMono(String.class)
             .timeout(Duration.ofSeconds(10))
             .block();
@@ -248,12 +302,13 @@ public class N8nApiService {
                             .path("/api/v1/workflows/{id}/deactivate")
                             .build(workflowId))
                     .retrieve()
-                    .onStatus(
-                            status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> clientResponse.bodyToMono(String.class)
-                                    .map(body -> new RuntimeException(
-                                            "Error al desactivar workflow (" + clientResponse.statusCode() + "): " + body))
-                    )
+            .onStatus(
+                status -> status.is4xxClientError() || status.is5xxServerError(),
+                clientResponse -> clientResponse.bodyToMono(String.class)
+                    .map(body -> WebClientResponseException.create(
+                        clientResponse.statusCode().value(), clientResponse.statusCode().toString(), clientResponse.headers().asHttpHeaders(),
+                        body == null ? null : body.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8))
+            )
             .bodyToMono(String.class)
             .timeout(Duration.ofSeconds(10))
             .block();

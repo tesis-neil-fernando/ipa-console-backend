@@ -7,6 +7,8 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.Instant;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class RestAccessDeniedHandler implements AccessDeniedHandler {
@@ -24,20 +26,15 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
                 ? accessDeniedException.getMessage()
                 : "Access is denied";
 
-        String body = """
-                {
-                  "path": "%s",
-                  "error": "forbidden",
-                  "message": "%s",
-                  "status": 403
-                }
-                """.formatted(path, escapeJson(message));
+        final var body = new java.util.HashMap<String, Object>();
+        body.put("timestamp", Instant.now().toString());
+        body.put("status", HttpServletResponse.SC_FORBIDDEN);
+        body.put("error", "Forbidden");
+        body.put("message", message);
+        body.put("path", path);
+        body.put("details", null);
 
-        response.getWriter().write(body);
-    }
-
-    // Helper para evitar caracteres que rompan el JSON
-    private String escapeJson(String s) {
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(response.getOutputStream(), body);
     }
 }

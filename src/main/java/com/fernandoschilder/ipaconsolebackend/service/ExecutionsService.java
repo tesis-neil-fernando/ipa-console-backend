@@ -58,7 +58,11 @@ public class ExecutionsService {
         return ResponseEntity.ok(new N8nApiService.ApiResponse<>(true, "Ejecuciones obtenidas correctamente", payload));
 
     } catch (N8nClientException ex) {
-        log.error("N8n client error while listing executions", ex);
+        if (ex.getStatusCode() >= 500) {
+            log.error("N8n client error while listing executions", ex);
+        } else {
+            log.warn("N8n client error while listing executions: {}", ex.getMessage());
+        }
         var err = new N8nApiService.ApiResponse<ExecutionsListResponseDto>(false,
             "Error contacting n8n: " + ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(err);

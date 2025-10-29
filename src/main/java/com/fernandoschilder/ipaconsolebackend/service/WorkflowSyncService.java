@@ -105,6 +105,25 @@ public class WorkflowSyncService {
             // preserve client exception so GlobalExceptionHandler can translate it correctly
             throw e;
         } catch (Exception e) {
+            // If the root cause is an upstream HTTP error, preserve its status in the N8nClientException
+            if (e instanceof org.springframework.web.reactive.function.client.WebClientResponseException wre) {
+                throw N8nClientException.from(wre);
+            }
+            if (e.getCause() instanceof org.springframework.web.reactive.function.client.WebClientResponseException wreCause) {
+                throw N8nClientException.from(wreCause);
+            }
+            // Also parse RuntimeException messages produced by WebClient onStatus mapping
+            if (e instanceof RuntimeException && e.getMessage() != null) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\((\\d{3})").matcher(e.getMessage());
+                if (m.find()) {
+                    try {
+                        int code = Integer.parseInt(m.group(1));
+                        throw new N8nClientException("Error procesando workflows: " + e.getMessage(), code, e);
+                    } catch (NumberFormatException ignored) {
+                        // fall through
+                    }
+                }
+            }
             // wrap unexpected errors into N8nClientException so the global handler returns a 502/Bad Gateway
             throw new N8nClientException("Error procesando workflows: " + e.getMessage(), e);
         }
