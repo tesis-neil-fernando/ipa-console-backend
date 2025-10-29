@@ -4,7 +4,7 @@ import com.fernandoschilder.ipaconsolebackend.model.PermissionEntity;
 import com.fernandoschilder.ipaconsolebackend.service.PermissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
+import com.fernandoschilder.ipaconsolebackend.dto.AssignNamespacesDTO;
 import java.util.List;
 
 @RestController
@@ -30,6 +30,12 @@ public class PermissionController {
     @GetMapping("/{type}")
     public PermissionEntity get(@PathVariable String type) {
         return permissionService.getByType(type);
+    }
+    @PutMapping("/permissions/{type}/namespaces")
+    public PermissionEntity assignNamespacesToPermission(
+            @PathVariable String type,
+            @RequestBody AssignNamespacesDTO body) {
+        return permissionService.setNamespaces(type, body.getNamespaces());
     }
 
     // DTO de entrada
