@@ -57,9 +57,19 @@ public class WorkflowSyncService {
                 if (wf.tags() != null) {
                     for (var t : wf.tags()) {
                         String tagId = t == null ? null : t.id();
+                        String tagName = t == null ? null : t.name();
                         if (tagId == null) continue;
                         TagEntity managed = tagRepository.findById(tagId).orElse(null);
-                        if (managed != null) tagSet.add(managed);
+                        if (managed == null) {
+                            // Create a minimal TagEntity if it doesn't exist yet. Use the
+                            // tag name from n8n when available, otherwise fall back to id.
+                            managed = new TagEntity();
+                            managed.setId(tagId);
+                            managed.setName(tagName != null ? tagName : tagId);
+                            managed.setCreatedAt(OffsetDateTime.now());
+                            managed = tagRepository.save(managed);
+                        }
+                        tagSet.add(managed);
                     }
                 }
                 e.setTags(tagSet);

@@ -27,7 +27,6 @@ public class ProcessService {
     private final WorkflowRepository workflowRepository;
     private final N8nApiService n8nApiService;
     private final N8nWebhookService n8nWebhookService;
-    private final ObjectMapper objectMapper;
     private final ProcessMapper processMapper;
 
     public ProcessService(ProcessRepository processRepository, WorkflowRepository workflowRepository, N8nApiService n8nApiService, N8nWebhookService n8nWebhookService, ObjectMapper objectMapper, ProcessMapper processMapper) {
@@ -35,7 +34,6 @@ public class ProcessService {
         this.workflowRepository = workflowRepository;
         this.n8nApiService = n8nApiService;
         this.n8nWebhookService = n8nWebhookService;
-        this.objectMapper = objectMapper;
         this.processMapper = processMapper;
     }
 

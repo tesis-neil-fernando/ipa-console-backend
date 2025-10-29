@@ -332,7 +332,7 @@ public class N8nApiService {
     public static record N8nExecutionsEnvelope(java.util.List<N8nExecution> data, String nextCursor) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static record N8nTag(String id) {}
+    public static record N8nTag(String id, String name) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static record N8nWorkflow(String id, String name, Boolean active, Boolean isArchived, java.util.List<N8nTag> tags) {}
