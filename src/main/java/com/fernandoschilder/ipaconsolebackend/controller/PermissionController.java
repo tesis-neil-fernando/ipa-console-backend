@@ -2,6 +2,9 @@ package com.fernandoschilder.ipaconsolebackend.controller;
 
 import com.fernandoschilder.ipaconsolebackend.model.PermissionEntity;
 import com.fernandoschilder.ipaconsolebackend.service.PermissionService;
+import com.fernandoschilder.ipaconsolebackend.dto.PermissionDTO;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import com.fernandoschilder.ipaconsolebackend.dto.AssignNamespacesDTO;
@@ -19,29 +22,37 @@ public class PermissionController {
 
     // Crear permiso (type único)
     @PostMapping
-    public ResponseEntity<PermissionEntity> create(@RequestBody CreatePermissionDTO req) {
+    public ResponseEntity<PermissionDTO> create(@RequestBody @Valid CreatePermissionDTO req) {
         PermissionEntity created = permissionService.createPermission(req.type());
-        return ResponseEntity.created(URI.create("/permissions/" + created.getType())).body(created);
+        return ResponseEntity.created(URI.create("/permissions/" + created.getType())).body(toDto(created));
     }
 
     // Listar todos los permisos
     @GetMapping
-    public List<PermissionEntity> list() {
-        return permissionService.listPermissions();
+    public List<PermissionDTO> list() {
+        return permissionService.listPermissions().stream().map(this::toDto).toList();
     }
 
     // Obtener un permiso por type
     @GetMapping("/{type}")
-    public PermissionEntity get(@PathVariable String type) {
-        return permissionService.getByType(type);
+    public PermissionDTO get(@PathVariable String type) {
+        return toDto(permissionService.getByType(type));
     }
     @PutMapping("/{type}/namespaces")
-    public PermissionEntity assignNamespacesToPermission(
+    public PermissionDTO assignNamespacesToPermission(
             @PathVariable String type,
             @RequestBody AssignNamespacesDTO body) {
-        return permissionService.setNamespaces(type, body.getNamespaces());
+        return toDto(permissionService.setNamespaces(type, body.getNamespaces()));
     }
 
     // DTO de entrada
-    public record CreatePermissionDTO(String type) {}
+    public record CreatePermissionDTO(@NotBlank String type) {}
+
+    private PermissionDTO toDto(PermissionEntity p) {
+        return PermissionDTO.builder()
+                .id(p.getId())
+                .type(p.getType())
+                .namespaces(p.getPermission_namespaces() == null ? java.util.Set.of() : p.getPermission_namespaces().stream().map(n -> n.getName()).collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new)))
+                .build();
+    }
 }

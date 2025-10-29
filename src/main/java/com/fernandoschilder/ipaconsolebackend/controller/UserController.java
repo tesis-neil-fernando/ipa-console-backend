@@ -1,6 +1,7 @@
 package com.fernandoschilder.ipaconsolebackend.controller;
 
 import com.fernandoschilder.ipaconsolebackend.dto.UserViewDTO;
+import com.fernandoschilder.ipaconsolebackend.dto.UserCreateDto;
 import com.fernandoschilder.ipaconsolebackend.model.UserEntity;
 import com.fernandoschilder.ipaconsolebackend.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +28,9 @@ public class UserController {
 
     // Crear usuario
     @PostMapping("")
-    public UserEntity createUser(@RequestBody UserEntity user) {
-        return userService.createUser(user);
+    public ResponseEntity<UserViewDTO> createUser(@RequestBody @jakarta.validation.Valid UserCreateDto user) {
+        UserViewDTO created = userService.createUser(user);
+        return ResponseEntity.created(java.net.URI.create("/users/" + created.getUsername())).body(created);
     }
 
     // Eliminar usuario por id

@@ -1,6 +1,7 @@
 package com.fernandoschilder.ipaconsolebackend.service;
 
 import com.fernandoschilder.ipaconsolebackend.dto.UserViewDTO;
+import com.fernandoschilder.ipaconsolebackend.dto.UserCreateDto;
 import com.fernandoschilder.ipaconsolebackend.model.RoleEntity;
 import com.fernandoschilder.ipaconsolebackend.model.UserEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.RoleRepository;
@@ -41,6 +42,18 @@ public class UserService {
         entity.setPassword(encoder.encode(user.getPassword()));
         entity.setEnabled(true);
         return userRepository.save(entity);
+    }
+
+    public UserViewDTO createUser(UserCreateDto dto) {
+        if (userRepository.existsByUsername(dto.getUsername())) {
+            throw new EntityExistsException("Username " + dto.getUsername() + " already exists");
+        }
+        UserEntity entity = new UserEntity();
+        entity.setUsername(dto.getUsername());
+        entity.setPassword(encoder.encode(dto.getPassword()));
+        entity.setEnabled(true);
+        UserEntity saved = userRepository.save(entity);
+        return toViewDTO(saved);
     }
 
     public UserEntity getUserByUsername(String username) {
