@@ -1,7 +1,7 @@
 package com.fernandoschilder.ipaconsolebackend.dto;
 
 public record ExecutionBriefDto(
-        Long id,
+        String id,
         String startedAt,
         boolean finished,
         String status

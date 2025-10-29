@@ -161,18 +161,17 @@ public class ProcessService {
     }
 
     private ExecutionBriefDto fetchLastExecution(String workflowId) {
-        var resp = n8nApiService.getExecutions(null, null, workflowId, null, 1, null);
+        var resp = n8nApiService.getExecutionsParsed(null, null, workflowId, null, 1, null);
 
         var body = resp.getBody();
         if (body == null || body.getData() == null) return null;
 
         try {
-            var root = objectMapper.readTree(body.getData()); // body.getData() es JSON String
-            var arr = root.path("data");
-            if (!arr.isArray() || arr.isEmpty()) return null;
+            var envelope = body.getData();
+            if (envelope.data() == null || envelope.data().isEmpty()) return null;
 
-            var e = arr.get(0); // asumimos más reciente primero
-            return new ExecutionBriefDto(e.path("id").asLong(), e.path("startedAt").asText(null), e.path("finished").asBoolean(), e.path("status").asText(null));
+            var e = envelope.data().get(0); // asumimos más reciente primero
+            return new ExecutionBriefDto(e.id(), e.startedAt(), e.finished() == null ? false : e.finished(), e.status());
         } catch (Exception ex) {
             // log.warn("No se pudo parsear executionBrief", ex);
             return null;

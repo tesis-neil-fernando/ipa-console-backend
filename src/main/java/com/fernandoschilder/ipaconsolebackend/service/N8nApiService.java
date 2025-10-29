@@ -1,5 +1,7 @@
 package com.fernandoschilder.ipaconsolebackend.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,9 +14,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class N8nApiService {
 
     private final WebClient n8nClient;
+    private final ObjectMapper objectMapper;
 
-    public N8nApiService(@Qualifier("n8nApiClient") WebClient n8nClient) {
+    public N8nApiService(@Qualifier("n8nApiClient") WebClient n8nClient, ObjectMapper objectMapper) {
         this.n8nClient = n8nClient;
+        this.objectMapper = objectMapper;
     }
 
     public ResponseEntity<ApiResponse<String>> getWorkflowsRaw() {
@@ -65,6 +69,46 @@ public class N8nApiService {
                     .block();
 
             return ResponseEntity.ok(new ApiResponse<>(true, "Ejecuciones obtenidas correctamente", response));
+
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "Error al obtener ejecuciones: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Typed helper: fetch executions and parse into a POJO envelope.
+     * Returns ResponseEntity with ApiResponse.data as {@link N8nExecutionsEnvelope} on success.
+     */
+    public ResponseEntity<ApiResponse<N8nExecutionsEnvelope>> getExecutionsParsed(
+            Boolean includeData, String status, String workflowId, String projectId,
+            Integer limit, String cursor) {
+
+        try {
+            String response = n8nClient.get()
+                    .uri(b -> {
+                        var u = b.path("/api/v1/executions");
+                        if (includeData != null) u.queryParam("includeData", includeData);
+                        if (status != null) u.queryParam("status", status);
+                        if (workflowId != null) u.queryParam("workflowId", workflowId);
+                        if (projectId != null) u.queryParam("projectId", projectId);
+                        if (limit != null) u.queryParam("limit", limit);
+                        if (cursor != null) u.queryParam("cursor", cursor);
+                        return u.build();
+                    })
+                    .retrieve()
+                    .onStatus(
+                            statusCode -> statusCode.is4xxClientError() || statusCode.is5xxServerError(),
+                            cr -> cr.bodyToMono(String.class)
+                                    .map(body -> new RuntimeException("Error al obtener ejecuciones (" + cr.statusCode() + "): " + body))
+                    )
+                    .bodyToMono(String.class)
+                    .block();
+
+            var envelope = objectMapper.readValue(response, N8nExecutionsEnvelope.class);
+
+            return ResponseEntity.ok(new ApiResponse<>(true, "Ejecuciones obtenidas correctamente", envelope));
 
         } catch (Exception e) {
             return ResponseEntity
@@ -132,4 +176,12 @@ public class N8nApiService {
         private String message;
         private T data;
     }
+
+    /* --- typed n8n shapes used by the client --- */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static record N8nExecution(String id, String status, Boolean finished,
+                                      String startedAt, String stoppedAt, String workflowId) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static record N8nExecutionsEnvelope(java.util.List<N8nExecution> data, String nextCursor) {}
 }

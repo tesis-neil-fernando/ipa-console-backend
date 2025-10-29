@@ -26,7 +26,7 @@ public class WorkflowSyncService {
     private final WorkflowRepository workflowRepository;
     private final TagRepository tagRepository;
     private final ProcessService processService; // <-- NUEVO
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public SyncSummary pullAndSave() {
