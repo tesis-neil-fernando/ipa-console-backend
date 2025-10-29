@@ -30,38 +30,31 @@ public class WorkflowSyncService {
 
     @Transactional
     public SyncSummary pullAndSave() {
-        ResponseEntity<N8nApiService.ApiResponse<String>> resp = n8nService.getWorkflowsRaw();
-        var body = resp.getBody();
-
-        if (body == null || !body.isSuccess() || body.getData() == null) {
-            throw new RuntimeException("No se pudo obtener workflows desde n8n: " + (body == null ? "respuesta vacía" : body.getMessage()));
-        }
-
         try {
-            JsonNode root = objectMapper.readTree(body.getData());
-            JsonNode data = root.path("data");
-            if (!data.isArray()) {
+            var envelope = n8nService.fetchWorkflows();
+            if (envelope == null || envelope.data() == null) {
+                return new SyncSummary(0, 0, 0);
+            }
+            if (envelope == null || envelope.data() == null) {
                 return new SyncSummary(0, 0, 0);
             }
 
-            // --- (tags upsert code stays as you already have) ---
-
             // A) Build all WorkflowEntity instances
             List<WorkflowEntity> entities = new ArrayList<>();
-            for (JsonNode wfNode : data) {
+            for (var wf : envelope.data()) {
                 WorkflowEntity e = new WorkflowEntity();
-                e.setId(wfNode.path("id").asText());
-                e.setName(wfNode.path("name").asText());
-                e.setActive(wfNode.path("active").asBoolean());
-                e.setArchived(wfNode.path("isArchived").asBoolean());
-                e.setRawJson(wfNode.toString());
+                e.setId(wf.id());
+                e.setName(wf.name());
+                e.setActive(wf.active() != null ? wf.active() : false);
+                e.setArchived(wf.isArchived() != null ? wf.isArchived() : false);
+                // store the raw JSON of the workflow as returned by n8n
+                e.setRawJson(objectMapper.writeValueAsString(wf));
 
                 // attach tags (as you already do)
                 Set<TagEntity> tagSet = new HashSet<>();
-                JsonNode tagsNode = wfNode.path("tags");
-                if (tagsNode.isArray()) {
-                    for (JsonNode t : tagsNode) {
-                        String tagId = t.path("id").asText(null);
+                if (wf.tags() != null) {
+                    for (var t : wf.tags()) {
+                        String tagId = t == null ? null : t.id();
                         if (tagId == null) continue;
                         TagEntity managed = tagRepository.findById(tagId).orElse(null);
                         if (managed != null) tagSet.add(managed);
@@ -103,6 +96,8 @@ public class WorkflowSyncService {
 
             return new SyncSummary(entities.size(), toCreate, toUpdate);
 
+        } catch (N8nClientException e) {
+            throw new RuntimeException("No se pudo obtener workflows desde n8n: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new RuntimeException("Error procesando workflows", e);
         }

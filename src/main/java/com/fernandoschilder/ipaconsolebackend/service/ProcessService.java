@@ -161,19 +161,14 @@ public class ProcessService {
     }
 
     private ExecutionBriefDto fetchLastExecution(String workflowId) {
-        var resp = n8nApiService.getExecutionsParsed(null, null, workflowId, null, 1, null);
-
-        var body = resp.getBody();
-        if (body == null || body.getData() == null) return null;
-
         try {
-            var envelope = body.getData();
-            if (envelope.data() == null || envelope.data().isEmpty()) return null;
+            var envelope = n8nApiService.fetchExecutions(null, null, workflowId, null, 1, null);
+            if (envelope == null || envelope.data() == null || envelope.data().isEmpty()) return null;
 
             var e = envelope.data().get(0); // asumimos más reciente primero
             return new ExecutionBriefDto(e.id(), e.startedAt(), e.finished() == null ? false : e.finished(), e.status());
-        } catch (Exception ex) {
-            // log.warn("No se pudo parsear executionBrief", ex);
+        } catch (N8nClientException ex) {
+            // log.warn("No se pudo obtener executionBrief desde n8n", ex);
             return null;
         }
     }

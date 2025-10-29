@@ -7,6 +7,8 @@ import com.fernandoschilder.ipaconsolebackend.dto.ExecutionsListResponseDto;
 import com.fernandoschilder.ipaconsolebackend.model.ProcessEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.ProcessRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ExecutionsService {
 
     private final N8nApiService n8nApiService;
@@ -25,15 +28,8 @@ public class ExecutionsService {
             Boolean includeData, String status, String workflowId, String projectId,
             Integer limit, String cursor) {
 
-    var n8nResp = n8nApiService.getExecutionsParsed(includeData, status, workflowId, projectId, limit, cursor);
-    if (n8nResp.getBody() == null || !n8nResp.getBody().isSuccess() || n8nResp.getBody().getData() == null) {
-        var fail = new N8nApiService.ApiResponse<ExecutionsListResponseDto>(false,
-            n8nResp.getBody() != null ? n8nResp.getBody().getMessage() : "Empty response from n8n", null);
-        return ResponseEntity.status(n8nResp.getStatusCode()).body(fail);
-    }
-
     try {
-        var envelope = n8nResp.getBody().getData();
+        var envelope = n8nApiService.fetchExecutions(includeData, status, workflowId, projectId, limit, cursor);
 
         var mapped = envelope.data().stream()
             .map(e -> {
@@ -54,6 +50,11 @@ public class ExecutionsService {
         var payload = new ExecutionsListResponseDto(mapped, envelope.nextCursor());
         return ResponseEntity.ok(new N8nApiService.ApiResponse<>(true, "Ejecuciones obtenidas correctamente", payload));
 
+    } catch (N8nClientException ex) {
+        log.error("N8n client error while listing executions", ex);
+        var err = new N8nApiService.ApiResponse<ExecutionsListResponseDto>(false,
+            "Error contacting n8n: " + ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(err);
     } catch (Exception ex) {
         var err = new N8nApiService.ApiResponse<ExecutionsListResponseDto>(false,
             "Error al procesar ejecuciones: " + ex.getMessage(), null);
@@ -62,7 +63,13 @@ public class ExecutionsService {
     }
 
     private static OffsetDateTime parseTs(String iso) {
-        return iso == null ? null : OffsetDateTime.parse(iso);
+        if (iso == null) return null;
+        try {
+            return OffsetDateTime.parse(iso);
+        } catch (java.time.format.DateTimeParseException ex) {
+            log.debug("Failed to parse timestamp '{}'", iso, ex);
+            return null;
+        }
     }
 
     // parsing is delegated to N8nApiService.getExecutionsParsed
