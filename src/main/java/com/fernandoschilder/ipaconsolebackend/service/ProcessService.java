@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -122,7 +123,47 @@ public class ProcessService {
 
     @Transactional(readOnly = true)
     public List<ProcessResponseDto> list() {
-    return processRepository.findAll().stream().map(processMapper::toResponseDto).map(this::enrichWithLastExecution).toList();
+        return processRepository.findAll().stream().map(processMapper::toResponseDto).map(this::enrichWithLastExecution).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProcessResponseDto> list(String tags) {
+        return list(tags, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProcessResponseDto> list(String tags, Boolean active, Boolean archived) {
+        List<ProcessResponseDto> base;
+
+        if (tags == null || tags.isBlank()) {
+            base = list();
+        } else {
+            var tagNames = Arrays.stream(tags.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+
+            if (tagNames.isEmpty()) {
+                base = list();
+            } else {
+                base = processRepository.findDistinctByWorkflow_Tags_NameIn(tagNames)
+                        .stream()
+                        .map(processMapper::toResponseDto)
+                        .map(this::enrichWithLastExecution)
+                        .toList();
+            }
+        }
+
+        // apply active/archived filters on the DTO's workflow fields
+        return base.stream()
+                .filter(p -> {
+                    var wf = p.workflow();
+                    if (wf == null) return true;
+                    if (active != null && wf.active() != active) return false;
+                    if (archived != null && wf.archived() != archived) return false;
+                    return true;
+                })
+                .toList();
     }
 
     @Transactional

@@ -34,8 +34,12 @@ public class ProcessController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProcessResponseDto>> list() {
-        return ResponseEntity.ok(processService.list());
+    public ResponseEntity<List<ProcessResponseDto>> list(
+            @RequestParam(required = false) String tags,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) Boolean archived
+    ) {
+        return ResponseEntity.ok(processService.list(tags, active, archived));
     }
 
     @PostMapping("/{id}/start")
