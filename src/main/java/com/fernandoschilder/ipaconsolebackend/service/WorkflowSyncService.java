@@ -102,7 +102,7 @@ public class WorkflowSyncService {
                 workflowRepository.findAllById(newWorkflowIds).forEach(newWorkflows::add);
 
                 for (WorkflowEntity wf : newWorkflows) {
-                    processService.ensureProcessForWorkflow(wf, "Proceso " + wf.getId(), "Tiempo de generación: " + nowIso);
+                    processService.ensureProcessForWorkflow(wf, "Proceso " + wf.getName(), "Tiempo de generación: " + nowIso);
                 }
             }
 
