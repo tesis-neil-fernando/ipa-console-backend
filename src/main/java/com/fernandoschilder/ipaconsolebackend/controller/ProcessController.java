@@ -8,12 +8,14 @@ import com.fernandoschilder.ipaconsolebackend.service.ProcessService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 
 import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequestMapping("/processes")
+@Validated
 public class ProcessController {
 
     private final ProcessService processService;

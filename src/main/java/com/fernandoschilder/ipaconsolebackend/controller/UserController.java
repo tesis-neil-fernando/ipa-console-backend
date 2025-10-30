@@ -2,17 +2,21 @@ package com.fernandoschilder.ipaconsolebackend.controller;
 
 import com.fernandoschilder.ipaconsolebackend.dto.UserViewDTO;
 import com.fernandoschilder.ipaconsolebackend.dto.UserCreateDto;
+import com.fernandoschilder.ipaconsolebackend.dto.PatchEnabledDto;
 import com.fernandoschilder.ipaconsolebackend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 
+import jakarta.validation.Valid;
 import java.util.Set;
 
 @RestController
 @RequestMapping("/users")
+@Validated
 public class UserController {
 
     private final UserService userService;
@@ -29,7 +33,7 @@ public class UserController {
 
     // Crear usuario
     @PostMapping("")
-    public ResponseEntity<UserViewDTO> createUser(@RequestBody @jakarta.validation.Valid UserCreateDto user) {
+    public ResponseEntity<UserViewDTO> createUser(@RequestBody @Valid UserCreateDto user) {
         UserViewDTO created = userService.createUser(user);
         return ResponseEntity.created(java.net.URI.create("/users/" + created.username())).body(created);
     }
@@ -52,7 +56,6 @@ public class UserController {
         return userService.listUsers(q, enabled, role, pageable);
     }
 
-    // ===== AJUSTES DE RUTA AQUÍ =====
     // Asignar/actualizar roles de un usuario
     @PutMapping("/{username}/roles")
     public UserViewDTO setRoles(@PathVariable String username,
@@ -60,10 +63,10 @@ public class UserController {
         return userService.setUserRoles(username, roles);
     }
 
-    // Activar/Desactivar usuario
+    // Activar/Desactivar usuario - accept small JSON body instead of request param
     @PatchMapping("/{id}/enabled")
     public UserViewDTO patchEnabled(@PathVariable Long id,
-                                    @RequestParam boolean value) {
-        return userService.updateEnabled(id, value);
+                                    @RequestBody @Valid PatchEnabledDto body) {
+        return userService.updateEnabled(id, body.enabled());
     }
 }

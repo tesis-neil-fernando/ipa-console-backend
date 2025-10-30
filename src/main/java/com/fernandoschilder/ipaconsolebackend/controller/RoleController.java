@@ -6,6 +6,7 @@ import com.fernandoschilder.ipaconsolebackend.dto.RoleDTO;
 import com.fernandoschilder.ipaconsolebackend.mapper.RoleMapper;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.http.ResponseEntity;
 import java.net.URI;
 import java.util.List;
@@ -14,6 +15,7 @@ import com.fernandoschilder.ipaconsolebackend.dto.SetPermsDTO;
 
 @RestController
 @RequestMapping("/roles")
+@Validated
 public class RoleController {
 
     private final RoleService roleService;

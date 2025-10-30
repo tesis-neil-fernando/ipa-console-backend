@@ -1,5 +1,6 @@
 package com.fernandoschilder.ipaconsolebackend.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -8,6 +9,8 @@ import jakarta.validation.constraints.Size;
  */
 public record UserCreateDto(
         @NotBlank(message = "username is required") @Size(min = 3, max = 100) String username,
-        @NotBlank(message = "password is required") @Size(min = 6, max = 100) String password
+        @NotBlank(message = "password is required") @Size(min = 6, max = 100)
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        String password
 ) {
 }

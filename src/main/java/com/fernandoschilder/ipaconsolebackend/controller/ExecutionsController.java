@@ -3,6 +3,7 @@ package com.fernandoschilder.ipaconsolebackend.controller;
 import com.fernandoschilder.ipaconsolebackend.dto.ExecutionsListResponseDto;
 import com.fernandoschilder.ipaconsolebackend.service.ExecutionsService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -10,8 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/executions")
+@Validated
 public class ExecutionsController {
     private final ExecutionsService executionsService;
+
+    private static final int DEFAULT_LIMIT = 50;
+    private static final int MAX_LIMIT = 200;
 
     public ExecutionsController(ExecutionsService executionsService) {
         this.executionsService = executionsService;
@@ -26,7 +31,11 @@ public class ExecutionsController {
             @RequestParam(required = false, defaultValue = "100") Integer limit,
             @RequestParam(required = false) String cursor
     ) {
-        var res = executionsService.listExecutions(includeData, status, workflowId, projectId, limit, cursor);
+        int lim = (limit == null) ? DEFAULT_LIMIT : limit;
+        if (lim <= 0 || lim > MAX_LIMIT) {
+            throw new IllegalArgumentException("limit must be between 1 and " + MAX_LIMIT);
+        }
+        var res = executionsService.listExecutions(includeData, status, workflowId, projectId, lim, cursor);
         return ResponseEntity.ok(res);
     }
 }

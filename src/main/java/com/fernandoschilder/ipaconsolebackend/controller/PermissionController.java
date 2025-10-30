@@ -6,6 +6,7 @@ import com.fernandoschilder.ipaconsolebackend.dto.PermissionDTO;
 import com.fernandoschilder.ipaconsolebackend.mapper.PermissionMapper;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 import com.fernandoschilder.ipaconsolebackend.dto.AssignNamespacesDTO;
 import com.fernandoschilder.ipaconsolebackend.dto.CreatePermissionDTO;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.net.URI;
 
 @RestController
 @RequestMapping("/permissions")
+@Validated
 public class PermissionController {
 
     private final PermissionService permissionService;

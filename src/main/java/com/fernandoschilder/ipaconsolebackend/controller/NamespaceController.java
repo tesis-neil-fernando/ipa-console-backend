@@ -3,6 +3,7 @@ package com.fernandoschilder.ipaconsolebackend.controller;
 import com.fernandoschilder.ipaconsolebackend.dto.NamespaceDTO;
 import com.fernandoschilder.ipaconsolebackend.service.NamespaceService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
 
 import org.springframework.http.ResponseEntity;
 import java.net.URI;
@@ -10,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/namespaces")
+@Validated
 public class NamespaceController {
 
     private final NamespaceService namespaceService;

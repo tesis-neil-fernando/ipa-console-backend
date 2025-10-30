@@ -24,6 +24,7 @@ import org.springframework.security.core.AuthenticationException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.MDC;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientException;
@@ -33,15 +34,26 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    public static record ErrorResponse(String timestamp, int status, String error, String message, String path, Map<String, String> details) {}
+        // Add correlationId to ErrorResponse for easier tracing. Also keep details map for optional fields.
+        public static record ErrorResponse(String timestamp, int status, String error, String message, String path, String correlationId, Map<String, String> details) {}
 
-    private ErrorResponse build(HttpStatus status, String message, String path) {
-        return new ErrorResponse(Instant.now().toString(), status.value(), status.getReasonPhrase(), message, path, null);
-    }
+        private ErrorResponse build(HttpStatus status, String message, String path) {
+            return new ErrorResponse(Instant.now().toString(), status.value(), status.getReasonPhrase(), message, path, extractCorrelationId(), null);
+        }
 
-    private ErrorResponse build(HttpStatus status, String message, String path, Map<String, String> details) {
-        return new ErrorResponse(Instant.now().toString(), status.value(), status.getReasonPhrase(), message, path, details);
-    }
+        private ErrorResponse build(HttpStatus status, String message, String path, Map<String, String> details) {
+            return new ErrorResponse(Instant.now().toString(), status.value(), status.getReasonPhrase(), message, path, extractCorrelationId(), details);
+        }
+
+        private String extractCorrelationId() {
+            // Prefer MDC value set by CorrelationIdFilter; fall back to empty string
+            try {
+                String cid = MDC.get("correlationId");
+                return cid == null ? "" : cid;
+            } catch (Exception ex) {
+                return "";
+            }
+        }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(EntityNotFoundException ex, HttpServletRequest request) {
@@ -76,7 +88,8 @@ public class GlobalExceptionHandler {
         if (ex instanceof com.fernandoschilder.ipaconsolebackend.service.N8nClientException && ((com.fernandoschilder.ipaconsolebackend.service.N8nClientException) ex).getUpstreamBody() != null) {
             String ub = ((com.fernandoschilder.ipaconsolebackend.service.N8nClientException) ex).getUpstreamBody();
             details = new HashMap<>();
-            details.put("upstreamBody", ub);
+            // Sanitize / summarize upstream body to avoid leaking sensitive internals
+            details.put("upstreamSummary", summarize(ub));
         }
 
         // If no status was set, inspect the cause for WebClientResponseException to extract upstream status/body
@@ -90,7 +103,7 @@ public class GlobalExceptionHandler {
                     String body = wre.getResponseBodyAsString();
                     if (body != null && !body.isBlank()) {
                         if (details == null) details = new HashMap<>();
-                        details.put("upstreamBody", body);
+                        details.put("upstreamSummary", summarize(body));
                     }
                 } catch (Exception ignored) {
                     // ignore
@@ -106,9 +119,9 @@ public class GlobalExceptionHandler {
         } else {
             // expected client errors (4xx) - warn without stacktrace to avoid noisy console traces
             log.warn("n8n client error (status={}): {}", status.value(), ex.getMessage());
-            if (details != null && details.containsKey("upstreamBody")) {
-                // still log upstream body at debug level for diagnostics
-                log.debug("n8n upstream body: {}", details.get("upstreamBody"));
+            if (details != null && details.containsKey("upstreamSummary")) {
+                // still log upstream summary at debug level for diagnostics
+                log.debug("n8n upstream summary: {}", details.get("upstreamSummary"));
             }
         }
 
@@ -119,7 +132,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex, HttpServletRequest request) {
-        Map<String, String> errors = new HashMap<>();
+    Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
@@ -184,7 +197,7 @@ public class GlobalExceptionHandler {
         Map<String, String> details = new HashMap<>();
         try {
             String body = ex.getResponseBodyAsString();
-            if (body != null && !body.isBlank()) details.put("upstreamBody", body);
+            if (body != null && !body.isBlank()) details.put("upstreamSummary", summarize(body));
         } catch (Exception ignore) {
             // ignore reading body errors
         }
@@ -206,5 +219,13 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception processing request {}", request.getRequestURI(), ex);
         var resp = build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", request.getRequestURI());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resp);
+    }
+
+    private String summarize(String body) {
+        if (body == null) return "";
+        String trimmed = body.trim();
+        int max = 256;
+        if (trimmed.length() <= max) return trimmed;
+        return trimmed.substring(0, max) + "...";
     }
 }
