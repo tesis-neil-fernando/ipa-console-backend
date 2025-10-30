@@ -33,8 +33,8 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public static UserDetailsImpl build(UserEntity user) {
-        Collection<? extends GrantedAuthority> authorities = user.getUser_roles().stream().map(role -> new SimpleGrantedAuthority(role.getName())) // Assuming RoleEntity has a 'getName()' method
-                .collect(Collectors.toList());
+    Collection<? extends GrantedAuthority> authorities = user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName())) // Assuming RoleEntity has a 'getName()' method
+        .collect(Collectors.toList());
         return new UserDetailsImpl(user.getId(), user.getUsername(), user.getPassword(), user.isEnabled(), authorities);
     }
 

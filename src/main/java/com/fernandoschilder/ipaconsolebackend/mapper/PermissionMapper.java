@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface PermissionMapper {
-    @Mapping(target = "namespaces", source = "permission_namespaces")
+    @Mapping(target = "namespaces", source = "namespaces")
     PermissionDTO toPermissionDto(PermissionEntity p);
 
     default String namespaceToString(NamespaceEntity n) {

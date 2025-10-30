@@ -20,7 +20,7 @@ public class RoleEntity {
     private String description;
 
     // Relación inversa con UserEntity.roles
-    @ManyToMany(mappedBy = "user_roles", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
     private Set<UserEntity> users;
 
     // Relación directa con PermissionEntity

@@ -114,7 +114,7 @@ public class UserService {
             throw new IllegalArgumentException("Roles not found: " + String.join(", ", missing));
         }
 
-        user.setUser_roles(roles);
+    user.setRoles(roles);
     userRepository.save(user);
     return userMapper.toViewDTO(user);
     }

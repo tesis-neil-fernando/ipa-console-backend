@@ -30,7 +30,7 @@ public class PermissionEntity {
             joinColumns = @JoinColumn(name = "permission_id"),
             inverseJoinColumns = @JoinColumn(name = "namespace_id")
     )
-    private Set<NamespaceEntity> permission_namespaces;
+    private Set<NamespaceEntity> namespaces;
 
     public PermissionEntity() {
     }
@@ -63,12 +63,12 @@ public class PermissionEntity {
         this.roles = roles;
     }
 
-    public Set<NamespaceEntity> getPermission_namespaces() {
-        return permission_namespaces;
+    public Set<NamespaceEntity> getNamespaces() {
+        return namespaces;
     }
 
-    public void setPermission_namespaces(Set<NamespaceEntity> permission_namespaces) {
-        this.permission_namespaces = permission_namespaces;
+    public void setNamespaces(Set<NamespaceEntity> namespaces) {
+        this.namespaces = namespaces;
     }
 
     @Override

@@ -23,8 +23,8 @@ public class EntityDtoMapper {
     }
 
     public PermissionDTO toPermissionDto(PermissionEntity p) {
-        Set<String> namespaces = (p.getPermission_namespaces() == null) ? Set.of()
-                : p.getPermission_namespaces().stream()
+    Set<String> namespaces = (p.getNamespaces() == null) ? Set.of()
+        : p.getNamespaces().stream()
                 .filter(ns -> ns != null && ns.getName() != null)
                 .map(ns -> ns.getName())
                 .collect(Collectors.toCollection(java.util.LinkedHashSet::new));

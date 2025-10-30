@@ -13,7 +13,7 @@ public class UserEntity {
     @Column(name = "user_id")
     private Long id;
 
-    @Column(name = "username")
+    @Column(name = "username", unique = true, nullable = false, length = 120)
     private String username;
 
     @Column(name = "password")
@@ -23,13 +23,13 @@ public class UserEntity {
     @Column(name = "enabled")
     private boolean enabled;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
+        name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<RoleEntity> user_roles;
+    private Set<RoleEntity> roles;
 
     public UserEntity() {
     }
@@ -72,12 +72,12 @@ public class UserEntity {
         this.enabled = enabled;
     }
 
-    public Set<RoleEntity> getUser_roles() {
-        return user_roles;
+    public Set<RoleEntity> getRoles() {
+        return roles;
     }
 
-    public void setUser_roles(Set<RoleEntity> user_roles) {
-        this.user_roles = user_roles;
+    public void setRoles(Set<RoleEntity> roles) {
+        this.roles = roles;
     }
 
     @Override
@@ -85,15 +85,11 @@ public class UserEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserEntity that = (UserEntity) o;
-        // Prefer identity by id when available, otherwise fall back to username
-        if (this.id != null && that.id != null) {
-            return Objects.equals(this.id, that.id);
-        }
-        return Objects.equals(this.username, that.username);
+        return Objects.equals(this.id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return id != null ? Objects.hash(id) : Objects.hash(username);
+        return Objects.hash(id);
     }
 }

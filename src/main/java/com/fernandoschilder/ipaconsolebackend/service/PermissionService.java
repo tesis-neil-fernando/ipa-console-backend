@@ -62,7 +62,7 @@ public class PermissionService {
                         .orElseThrow(() -> new EntityNotFoundException("Namespace not found: " + name)))
                 .collect(Collectors.toSet());
 
-        perm.setPermission_namespaces(namespaces);
+    perm.setNamespaces(namespaces);
         return permissionRepository.save(perm);
     }
 

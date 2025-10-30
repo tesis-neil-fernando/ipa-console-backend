@@ -20,7 +20,7 @@ public class UserSpecifications {
     public static Specification<UserEntity> hasRole(String roleName) {
         return (root, query, cb) -> {
             query.distinct(true); // evita duplicados por el join
-            Join<UserEntity, RoleEntity> join = root.join("user_roles", JoinType.LEFT);
+            Join<UserEntity, RoleEntity> join = root.join("roles", JoinType.LEFT);
             return cb.equal(cb.lower(join.get("name")), roleName.toLowerCase());
         };
     }

@@ -17,17 +17,17 @@ public class UserMapper {
     public UserViewDTO toViewDTO(UserEntity e) {
         if (e == null) return null;
 
-        Set<String> roles = (e.getUser_roles() == null) ? Set.of()
-                : e.getUser_roles().stream()
+    Set<String> roles = (e.getRoles() == null) ? Set.of()
+        : e.getRoles().stream()
                 .filter(Objects::nonNull)
                 .map(RoleEntity::getName)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        Set<String> namespaces = Optional.ofNullable(e.getUser_roles()).orElse(Set.of()).stream()
+    Set<String> namespaces = Optional.ofNullable(e.getRoles()).orElse(Set.of()).stream()
                 .filter(Objects::nonNull)
                 .flatMap(r -> Optional.ofNullable(r.getPermissions()).orElse(Set.of()).stream())
                 .filter(Objects::nonNull)
-                .flatMap(p -> Optional.ofNullable(p.getPermission_namespaces()).orElse(Set.of()).stream())
+        .flatMap(p -> Optional.ofNullable(p.getNamespaces()).orElse(Set.of()).stream())
                 .filter(Objects::nonNull)
                 .map(ns -> ns.getName())
                 .filter(Objects::nonNull)

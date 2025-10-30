@@ -23,7 +23,7 @@ public class NamespaceEntity {
 
     // Evita recursion infinita en JSON
     @JsonIgnore
-    @ManyToMany(mappedBy = "permission_namespaces", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "namespaces", fetch = FetchType.LAZY)
     private Set<PermissionEntity> permissions;
 
     // Si tus procesos tienen un campo "namespace", esto se mantiene
