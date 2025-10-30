@@ -2,8 +2,11 @@ package com.fernandoschilder.ipaconsolebackend.utils;
 
 import java.util.Base64;
 import java.util.Date;
+import java.util.Arrays;
+import java.util.List;
 
 import com.fernandoschilder.ipaconsolebackend.security.UserDetailsImpl;
+import org.springframework.security.core.GrantedAuthority;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
@@ -30,11 +33,18 @@ public class JwtUtils {
         Algorithm algorithm = getAlgorithm();
         Date now = new Date();
         Date exp = new Date(now.getTime() + jwtExpirationMs);
-        return JWT.create()
-                .withSubject(userPrincipal.getUsername())
-                .withIssuedAt(now)
-                .withExpiresAt(exp)
-                .sign(algorithm);
+    // collect authorities as simple strings
+    String[] roles = userPrincipal.getAuthorities().stream()
+        .map(GrantedAuthority::getAuthority)
+        .toArray(String[]::new);
+
+    return JWT.create()
+        .withSubject(userPrincipal.getUsername())
+        .withClaim("id", userPrincipal.getId())
+        .withArrayClaim("roles", roles)
+        .withIssuedAt(now)
+        .withExpiresAt(exp)
+        .sign(algorithm);
     }
 
     private Algorithm getAlgorithm() {
@@ -57,6 +67,29 @@ public class JwtUtils {
         } catch (JWTVerificationException e) {
             logger.error("Failed to parse JWT and extract subject: {}", e.getMessage());
             return null;
+        }
+    }
+
+    public Long getUserIdFromJwtToken(String token) {
+        try {
+            JWTVerifier verifier = JWT.require(getAlgorithm()).build();
+            DecodedJWT jwt = verifier.verify(token);
+            return jwt.getClaim("id").asLong();
+        } catch (Exception e) {
+            logger.error("Failed to parse JWT and extract id: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    public List<String> getRolesFromJwtToken(String token) {
+        try {
+            JWTVerifier verifier = JWT.require(getAlgorithm()).build();
+            DecodedJWT jwt = verifier.verify(token);
+            String[] arr = jwt.getClaim("roles").asArray(String.class);
+            return arr == null ? List.of() : Arrays.asList(arr);
+        } catch (Exception e) {
+            logger.error("Failed to parse JWT and extract roles: {}", e.getMessage());
+            return List.of();
         }
     }
 

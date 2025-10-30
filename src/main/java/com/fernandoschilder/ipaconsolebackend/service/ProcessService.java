@@ -20,19 +20,23 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
 
 @Service
 public class ProcessService {
 
     private final ProcessRepository processRepository;
     private final WorkflowRepository workflowRepository;
+    private final UserRepository userRepository;
     private final N8nApiService n8nApiService;
     private final N8nWebhookService n8nWebhookService;
     private final ProcessMapper processMapper;
 
-    public ProcessService(ProcessRepository processRepository, WorkflowRepository workflowRepository, N8nApiService n8nApiService, N8nWebhookService n8nWebhookService, ObjectMapper objectMapper, ProcessMapper processMapper) {
+    public ProcessService(ProcessRepository processRepository, WorkflowRepository workflowRepository, UserRepository userRepository, N8nApiService n8nApiService, N8nWebhookService n8nWebhookService, ObjectMapper objectMapper, ProcessMapper processMapper) {
         this.processRepository = processRepository;
         this.workflowRepository = workflowRepository;
+        this.userRepository = userRepository;
         this.n8nApiService = n8nApiService;
         this.n8nWebhookService = n8nWebhookService;
         this.processMapper = processMapper;
@@ -155,6 +159,52 @@ public class ProcessService {
         }
 
         // apply active/archived filters on the DTO's workflow fields
+        return base.stream()
+                .filter(p -> {
+                    var wf = p.workflow();
+                    if (wf == null) return true;
+                    if (active != null && wf.active() != active) return false;
+                    if (archived != null && wf.archived() != archived) return false;
+                    return true;
+                })
+                .toList();
+    }
+
+    /**
+     * List processes for the current authenticated user, scoping by namespaces where the user
+     * has the given permission type (e.g., "view"). This uses `UserRepository.findNamespaceIdsByUsernameAndPermissionType`.
+     */
+    @Transactional(readOnly = true)
+    public List<ProcessResponseDto> listForCurrentUser(String tags, Boolean active, Boolean archived, String permissionType) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return List.of();
+
+        String username = auth.getName();
+        List<Long> allowedNamespaceIds = userRepository.findNamespaceIdsByUsernameAndPermissionType(username, permissionType);
+        if (allowedNamespaceIds == null || allowedNamespaceIds.isEmpty()) return List.of();
+
+        List<ProcessEntity> procEntities;
+        if (tags == null || tags.isBlank()) {
+            procEntities = processRepository.findAllByNamespace_IdIn(allowedNamespaceIds);
+        } else {
+            var tagNames = Arrays.stream(tags.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+
+            if (tagNames.isEmpty()) {
+                procEntities = processRepository.findAllByNamespace_IdIn(allowedNamespaceIds);
+            } else {
+                // fetch by tags then filter by namespace id
+                var byTags = processRepository.findDistinctByWorkflow_Tags_NameIn(tagNames);
+                procEntities = byTags.stream()
+                        .filter(p -> p.getNamespace() != null && allowedNamespaceIds.contains(p.getNamespace().getId()))
+                        .toList();
+            }
+        }
+
+        var base = procEntities.stream().map(processMapper::toResponseDto).map(this::enrichWithLastExecution).toList();
+
         return base.stream()
                 .filter(p -> {
                     var wf = p.workflow();

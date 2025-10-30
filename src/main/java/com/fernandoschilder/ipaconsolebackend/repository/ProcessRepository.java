@@ -20,4 +20,7 @@ public interface ProcessRepository extends JpaRepository<ProcessEntity, Long> {
 
     @EntityGraph(attributePaths = {"workflow", "parameters"})
     java.util.List<ProcessEntity> findDistinctByWorkflow_Tags_NameIn(java.util.Collection<String> names);
+
+    @EntityGraph(attributePaths = {"workflow", "parameters"})
+    java.util.List<ProcessEntity> findAllByNamespace_IdIn(java.util.Collection<Long> namespaceIds);
 }

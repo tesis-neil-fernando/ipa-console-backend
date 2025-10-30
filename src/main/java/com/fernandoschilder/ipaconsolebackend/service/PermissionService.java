@@ -27,11 +27,20 @@ public class PermissionService {
     /* ======================== CRUD PERMISO ======================== */
 
     public PermissionEntity createPermission(String type) {
-        if (permissionRepository.existsByType(type)) {
-            throw new EntityExistsException("Permission already exists: " + type);
+        String normalized = normalizeType(type);
+        if (permissionRepository.existsByType(normalized)) {
+            throw new EntityExistsException("Permission already exists: " + normalized);
         }
-        PermissionEntity p = new PermissionEntity(type);
+        PermissionEntity p = new PermissionEntity(normalized);
         return permissionRepository.save(p);
+    }
+
+    private String normalizeType(String type) {
+        if (type == null) throw new IllegalArgumentException("Permission type cannot be null");
+        String t = type.trim().toLowerCase();
+        // Accept only canonical permission types
+        if (Set.of("view", "exec", "edit", "admin").contains(t)) return t;
+        throw new IllegalArgumentException("Invalid permission type: " + type + ". Allowed: view, exec, edit, admin");
     }
 
     public List<PermissionEntity> listPermissions() {
