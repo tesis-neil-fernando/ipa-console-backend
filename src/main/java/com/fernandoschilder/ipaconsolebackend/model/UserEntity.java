@@ -1,5 +1,6 @@
 package com.fernandoschilder.ipaconsolebackend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.Objects;
 import java.util.Set;
@@ -16,6 +17,7 @@ public class UserEntity {
     private String username;
 
     @Column(name = "password")
+    @JsonIgnore
     private String password;
 
     @Column(name = "enabled")
@@ -83,11 +85,15 @@ public class UserEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserEntity that = (UserEntity) o;
-        return enabled == that.enabled && Objects.equals(id, that.id) && Objects.equals(username, that.username) && Objects.equals(password, that.password) && Objects.equals(user_roles, that.user_roles);
+        // Prefer identity by id when available, otherwise fall back to username
+        if (this.id != null && that.id != null) {
+            return Objects.equals(this.id, that.id);
+        }
+        return Objects.equals(this.username, that.username);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, password, enabled, user_roles);
+        return id != null ? Objects.hash(id) : Objects.hash(username);
     }
 }

@@ -24,7 +24,7 @@ public class RoleEntity {
     private Set<UserEntity> users;
 
     // Relación directa con PermissionEntity
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "role_permissions",                         // Nombre de la tabla intermedia existente
             joinColumns = @JoinColumn(name = "role_id"),        // Columna FK hacia RoleEntity
