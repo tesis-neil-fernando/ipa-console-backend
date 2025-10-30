@@ -2,6 +2,8 @@ package com.fernandoschilder.ipaconsolebackend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -17,17 +19,16 @@ public class NamespaceEntity {
     private Long id;
 
     @Column(name = "name", unique = true, nullable = false, length = 120)
+    @NotNull
+    @Size(max = 120)
     private String name;
 
     @Column(name = "description", length = 255)
     private String description;
 
-    // Evita recursion infinita en JSON
     @JsonIgnore
     @ManyToMany(mappedBy = "namespaces", fetch = FetchType.LAZY)
     private Set<PermissionEntity> permissions = new HashSet<>();
-
-    // Si tus procesos tienen un campo "namespace", esto se mantiene
     @JsonIgnore
     @OneToMany(mappedBy = "namespace", fetch = FetchType.LAZY)
     private Set<ProcessEntity> processes = new HashSet<>();
@@ -111,11 +112,12 @@ public class NamespaceEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         NamespaceEntity that = (NamespaceEntity) o;
+        if (this.id == null || that.id == null) return false;
         return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id != null ? id.hashCode() : System.identityHashCode(this);
     }
 }

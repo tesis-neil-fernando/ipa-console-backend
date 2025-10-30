@@ -1,6 +1,7 @@
 package com.fernandoschilder.ipaconsolebackend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -14,6 +15,7 @@ public class LogEntity {
     private Long id;
 
     @Column(name = "time")
+    @NotNull
     private Instant time;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -94,11 +96,12 @@ public class LogEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LogEntity logEntity = (LogEntity) o;
+        if (this.id == null || logEntity.id == null) return false;
         return Objects.equals(id, logEntity.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id != null ? id.hashCode() : System.identityHashCode(this);
     }
 }

@@ -1,6 +1,7 @@
 package com.fernandoschilder.ipaconsolebackend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -14,6 +15,7 @@ public class EventEntity {
     private Long id;
 
     @Column(name = "time")
+    @NotNull
     private Instant time;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -81,11 +83,12 @@ public class EventEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         EventEntity that = (EventEntity) o;
+        if (this.id == null || that.id == null) return false;
         return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id != null ? id.hashCode() : System.identityHashCode(this);
     }
 }

@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 @Service
@@ -98,7 +98,7 @@ public class ExecutionSyncService {
                         p.ifPresent(proc -> e.setProcessName(proc.getName()));
                     }
 
-                    e.setCreatedAt(OffsetDateTime.now());
+                    e.setCreatedAt(Instant.now());
                     executionRepository.save(e);
                     created++;
                 }
@@ -118,10 +118,10 @@ public class ExecutionSyncService {
         }
     }
 
-    private static OffsetDateTime parseTs(String iso) {
+    private static Instant parseTs(String iso) {
         if (iso == null) return null;
         try {
-            return OffsetDateTime.parse(iso);
+            return java.time.OffsetDateTime.parse(iso).toInstant();
         } catch (java.time.format.DateTimeParseException ex) {
             log.debug("Failed to parse timestamp '{}'", iso, ex);
             return null;

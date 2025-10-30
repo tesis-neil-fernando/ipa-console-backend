@@ -1,6 +1,9 @@
 package com.fernandoschilder.ipaconsolebackend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -15,23 +18,18 @@ public class RoleEntity {
     private Long id;
 
     @Column(name = "name", unique = true, nullable = false, length = 100)
-    private String name; // Ejemplo: "administrador", "inteligencia_comercial", "marketing"
+    @NotNull
+    @Size(max = 100)
+    private String name;
 
     @Column(name = "description", length = 255)
     private String description;
 
-    // Relación inversa con UserEntity.roles
     @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
     private Set<UserEntity> users = new HashSet<>();
-
-    // Relación directa con PermissionEntity
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "role_permissions",                         // Nombre de la tabla intermedia existente
-        joinColumns = @JoinColumn(name = "role_id"),        // Columna FK hacia RoleEntity
-        inverseJoinColumns = @JoinColumn(name = "permission_id") // Columna FK hacia PermissionEntity
-    )
-    private Set<PermissionEntity> permissions = new HashSet<>(); // Cambié el nombre lógico, pero conserva la misma tabla (role_permissions)
+    @JoinTable(name = "role_permissions", joinColumns = @JoinColumn(name = "role_id"), inverseJoinColumns = @JoinColumn(name = "permission_id"))
+    private Set<PermissionEntity> permissions = new HashSet<>();
 
     public RoleEntity() {
     }
@@ -114,11 +112,12 @@ public class RoleEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RoleEntity that = (RoleEntity) o;
+        if (this.id == null || that.id == null) return false;
         return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id != null ? id.hashCode() : System.identityHashCode(this);
     }
 }

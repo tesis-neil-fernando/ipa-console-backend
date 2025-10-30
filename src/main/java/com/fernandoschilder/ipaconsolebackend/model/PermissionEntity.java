@@ -2,6 +2,9 @@ package com.fernandoschilder.ipaconsolebackend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -16,21 +19,16 @@ public class PermissionEntity {
     private Long id;
 
     @Column(name = "type", unique = true, nullable = false, length = 100)
-    private String type;   // "administrador", "visualizar", "ejecutar", "editar_parametros", etc.
+    @NotNull
+    @Size(max = 100)
+    private String type;
 
-    // Inverso de RoleEntity.role_permissions  (¡ojo al nombre!)
     @JsonIgnore
     @ManyToMany(mappedBy = "permissions", fetch = FetchType.LAZY)
     private Set<RoleEntity> roles = new HashSet<>();
-
-    // (Opcional) Permisos aplicados a namespaces
     @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "permission_namespaces",
-        joinColumns = @JoinColumn(name = "permission_id"),
-        inverseJoinColumns = @JoinColumn(name = "namespace_id")
-    )
+    @JoinTable(name = "permission_namespaces", joinColumns = @JoinColumn(name = "permission_id"), inverseJoinColumns = @JoinColumn(name = "namespace_id"))
     private Set<NamespaceEntity> namespaces = new HashSet<>();
 
     public PermissionEntity() {
@@ -105,11 +103,12 @@ public class PermissionEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PermissionEntity that = (PermissionEntity) o;
+        if (this.id == null || that.id == null) return false;
         return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id != null ? id.hashCode() : System.identityHashCode(this);
     }
 }

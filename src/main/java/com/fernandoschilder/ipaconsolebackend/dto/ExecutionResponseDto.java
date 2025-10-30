@@ -1,11 +1,11 @@
 package com.fernandoschilder.ipaconsolebackend.dto;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 public record ExecutionResponseDto(
         String id,
-        OffsetDateTime startedAt,
-        OffsetDateTime finishedAt,
+        Instant startedAt,
+        Instant finishedAt,
         String processName,
         String status,
         Boolean finished

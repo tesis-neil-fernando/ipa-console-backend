@@ -22,21 +22,11 @@ public class WorkflowEntity {
     @Column(name = "raw_json", columnDefinition = "text")
     private String rawJson;
 
-    /**
-     * Inverse side of the OneToOne with ProcessEntity.
-     * Note: JPA providers may ignore LAZY on OneToOne mappings unless bytecode enhancement or provider-specific
-     * proxying is enabled (for example Hibernate's bytecode instrumentation or @LazyToOne).
-     * If you rely on lazy-loading here, enable enhancement or consider mapping changes.
-     */
     @OneToOne(mappedBy = "workflow", fetch = FetchType.LAZY, optional = true)
     private ProcessEntity process;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "workflow_tags",
-            joinColumns = @JoinColumn(name = "workflow_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
-    )
+    @JoinTable(name = "workflow_tags", joinColumns = @JoinColumn(name = "workflow_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private Set<TagEntity> tags = new HashSet<>();
 
     public WorkflowEntity() {
@@ -112,12 +102,13 @@ public class WorkflowEntity {
         if (this == o) return true;
         if (!(o instanceof WorkflowEntity)) return false;
         WorkflowEntity that = (WorkflowEntity) o;
+        if (this.id == null || that.id == null) return false;
         return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id != null ? id.hashCode() : System.identityHashCode(this);
     }
 
 }

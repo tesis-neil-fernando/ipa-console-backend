@@ -6,8 +6,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Objects;
 
 @Entity
@@ -18,18 +20,20 @@ public class TagEntity {
     private String id;
 
     @Column(nullable = false, length = 255)
+    @NotNull
+    @Size(max = 255)
     private String name;
 
     @Column(name = "created_at")
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
+    private Instant updatedAt;
 
     public TagEntity() {
     }
 
-    public TagEntity(String id, String name, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public TagEntity(String id, String name, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.name = name;
         this.createdAt = createdAt;
@@ -52,31 +56,31 @@ public class TagEntity {
         this.name = name;
     }
 
-    public OffsetDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(OffsetDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public OffsetDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
 
     @PrePersist
     public void prePersist() {
-        if (createdAt == null) createdAt = OffsetDateTime.now();
+        if (createdAt == null) createdAt = Instant.now();
         updatedAt = createdAt;
     }
 
     @PreUpdate
     public void preUpdate() {
-        updatedAt = OffsetDateTime.now();
+        updatedAt = Instant.now();
     }
 
     @Override
@@ -84,11 +88,12 @@ public class TagEntity {
         if (this == o) return true;
         if (!(o instanceof TagEntity)) return false;
         TagEntity that = (TagEntity) o;
+        if (this.id == null || that.id == null) return false;
         return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id != null ? id.hashCode() : System.identityHashCode(this);
     }
 }

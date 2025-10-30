@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,9 +20,9 @@ public interface ExecutionRepository extends JpaRepository<ExecutionEntity, Long
     List<ExecutionSummary> findAllSummaries(Pageable pageable);
 
     @Query("select e.executionId as executionId, e.startedAt as startedAt, e.stoppedAt as stoppedAt, e.processName as processName, e.status as status, e.finished as finished, e.createdAt as createdAt from ExecutionEntity e where e.createdAt < :createdAt order by e.createdAt desc")
-    List<ExecutionSummary> findSummariesByCreatedAtBefore(@Param("createdAt") OffsetDateTime createdAt, Pageable pageable);
+    List<ExecutionSummary> findSummariesByCreatedAtBefore(@Param("createdAt") Instant createdAt, Pageable pageable);
 
     // Resolve only the createdAt timestamp for a given execution id — avoids loading the full entity (and its LOB)
     @Query("select e.createdAt from ExecutionEntity e where e.executionId = :executionId")
-    Optional<OffsetDateTime> findCreatedAtByExecutionId(@Param("executionId") String executionId);
+    Optional<Instant> findCreatedAtByExecutionId(@Param("executionId") String executionId);
 }

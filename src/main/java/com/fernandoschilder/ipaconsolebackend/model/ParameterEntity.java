@@ -1,6 +1,9 @@
 package com.fernandoschilder.ipaconsolebackend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import java.util.Objects;
 
 @Entity
@@ -16,12 +19,18 @@ public class ParameterEntity {
     private ProcessEntity process;
 
     @Column(name = "name", nullable = false)
+    @NotNull
+    @Size(max = 255)
     private String name;
 
     @Column(name = "value", nullable = false)
+    @NotNull
+    @Size(max = 2000)
     private String value;
 
     @Column(name = "type", nullable = false)
+    @NotNull
+    @Size(max = 100)
     private String type;
 
     public ParameterEntity() {
@@ -79,11 +88,12 @@ public class ParameterEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ParameterEntity that = (ParameterEntity) o;
+        if (this.id == null || that.id == null) return false;
         return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id != null ? id.hashCode() : System.identityHashCode(this);
     }
 }

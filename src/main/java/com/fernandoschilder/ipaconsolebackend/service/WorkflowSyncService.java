@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -66,7 +66,7 @@ public class WorkflowSyncService {
                             managed = new TagEntity();
                             managed.setId(tagId);
                             managed.setName(tagName != null ? tagName : tagId);
-                            managed.setCreatedAt(OffsetDateTime.now());
+                            managed.setCreatedAt(Instant.now());
                             managed = tagRepository.save(managed);
                         }
                         tagSet.add(managed);
@@ -95,8 +95,8 @@ public class WorkflowSyncService {
             newWorkflowIds.removeAll(existingIds); // now only the newly created IDs remain
 
             // E) Create a Process for each NEW workflow (idempotent)
-            if (!newWorkflowIds.isEmpty()) {
-                String nowIso = OffsetDateTime.now().toString();
+                if (!newWorkflowIds.isEmpty()) {
+                String nowIso = Instant.now().toString();
                 // re-load managed instances by their IDs
                 List<WorkflowEntity> newWorkflows = new ArrayList<>();
                 workflowRepository.findAllById(newWorkflowIds).forEach(newWorkflows::add);

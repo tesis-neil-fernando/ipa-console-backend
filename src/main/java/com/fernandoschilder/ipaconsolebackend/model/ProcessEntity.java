@@ -1,6 +1,8 @@
 package com.fernandoschilder.ipaconsolebackend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -19,6 +21,8 @@ public class ProcessEntity {
     private NamespaceEntity namespace;
 
     @Column(name = "name")
+    @NotNull
+    @Size(max = 255)
     private String name;
 
     @Column(name = "description")
@@ -102,11 +106,12 @@ public class ProcessEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ProcessEntity that = (ProcessEntity) o;
+        if (this.id == null || that.id == null) return false;
         return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id != null ? id.hashCode() : System.identityHashCode(this);
     }
 }
