@@ -3,6 +3,7 @@ package com.fernandoschilder.ipaconsolebackend.security;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 import com.fernandoschilder.ipaconsolebackend.utils.AuthTokenFilter;
+import com.fernandoschilder.ipaconsolebackend.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -39,14 +40,17 @@ public class SecurityConfiguration {
     @Autowired
     private RestAccessDeniedHandler accessDeniedHandler;
 
+    @Autowired
+    private com.fernandoschilder.ipaconsolebackend.utils.JwtUtils jwtUtils;
+
     private static final String[] WHITE_LIST_URL = {  "swagger-ui/**", "/v3/**", "/auth/**", "/user-dashboard" };
 
     @Value("${fernandoschilder.app.front-url}")
     private String frontUrl;
 
     @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
+    public AuthTokenFilter authenticationJwtTokenFilter(JwtUtils jwtUtils) {
+        return new AuthTokenFilter(jwtUtils);
     }
 
     @Bean
@@ -84,7 +88,7 @@ public class SecurityConfiguration {
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(authenticationJwtTokenFilter(jwtUtils), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
