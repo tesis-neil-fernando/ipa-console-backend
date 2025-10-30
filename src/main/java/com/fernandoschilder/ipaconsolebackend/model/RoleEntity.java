@@ -22,8 +22,7 @@ public class RoleEntity {
     @Size(max = 100)
     private String name;
 
-    @Column(name = "description", length = 255)
-    private String description;
+    // description removed per request
 
     @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
     private Set<UserEntity> users = new HashSet<>();
@@ -34,9 +33,8 @@ public class RoleEntity {
     public RoleEntity() {
     }
 
-    public RoleEntity(String name, String description) {
+    public RoleEntity(String name) {
         this.name = name;
-        this.description = description;
     }
 
     public Long getId() {
@@ -55,13 +53,7 @@ public class RoleEntity {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    // description getter/setter removed
 
     public Set<UserEntity> getUsers() {
         return users;

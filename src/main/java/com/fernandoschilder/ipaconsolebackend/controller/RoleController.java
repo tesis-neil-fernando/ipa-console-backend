@@ -29,7 +29,7 @@ public class RoleController {
     // Crear rol
     @PostMapping
     public ResponseEntity<RoleDTO> create(@RequestBody @Valid CreateRoleDTO req) {
-        RoleEntity created = roleService.createRole(req.name(), req.description());
+        RoleEntity created = roleService.createRole(req.name());
         return ResponseEntity.created(URI.create("/roles/" + created.getName())).body(mapper.toRoleDto(created));
     }
 
@@ -55,6 +55,12 @@ public class RoleController {
     @PatchMapping("/{name}/permissions")
     public RoleDTO addPermissions(@PathVariable String name, @RequestBody SetPermsDTO req) {
         return mapper.toRoleDto(roleService.addPermissionsToRole(name, req.permissions()));
+    }
+
+    // Patch permissions including namespaces: accepts a richer DTO with namespaces for each permission
+    @PatchMapping("/{name}/permissions/namespaces")
+    public RoleDTO patchPermissionsWithNamespaces(@PathVariable String name, @RequestBody com.fernandoschilder.ipaconsolebackend.dto.SetPermsWithNamespacesDTO req) {
+        return mapper.toRoleDto(roleService.setPermissionsToRole(name, req.permissions()));
     }
 
     // DTOs moved to `com.fernandoschilder.ipaconsolebackend.dto` package:

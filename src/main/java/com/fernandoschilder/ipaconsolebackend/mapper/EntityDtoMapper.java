@@ -19,7 +19,7 @@ public class EntityDtoMapper {
                 .map(PermissionEntity::getType)
                 .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
 
-        return new RoleDTO(r.getId(), r.getName(), r.getDescription(), perms);
+    return new RoleDTO(r.getId(), r.getName(), perms);
     }
 
     public PermissionDTO toPermissionDto(PermissionEntity p) {

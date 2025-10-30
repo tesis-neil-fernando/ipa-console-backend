@@ -23,8 +23,6 @@ public class NamespaceEntity {
     @Size(max = 120)
     private String name;
 
-    @Column(name = "description", length = 255)
-    private String description;
 
     @JsonIgnore
     @ManyToMany(mappedBy = "namespaces", fetch = FetchType.LAZY)
@@ -56,13 +54,7 @@ public class NamespaceEntity {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    // description removed per request
 
     public Set<PermissionEntity> getPermissions() {
         return permissions;

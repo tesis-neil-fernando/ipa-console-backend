@@ -24,6 +24,22 @@ public class PermissionService {
         this.namespaceRepository = namespaceRepository;
     }
 
+    /**
+     * Attach an existing namespace to an existing permission.
+     * Throws EntityNotFoundException if either does not exist.
+     */
+    @jakarta.transaction.Transactional
+    public PermissionEntity addNamespaceToPermission(String permissionType, String namespaceName) {
+        PermissionEntity perm = permissionRepository.findByType(permissionType)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Permission not found: " + permissionType));
+
+        NamespaceEntity ns = namespaceRepository.findByName(namespaceName)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Namespace not found: " + namespaceName));
+
+        perm.addNamespace(ns);
+        return permissionRepository.save(perm);
+    }
+
     /* ======================== CRUD PERMISO ======================== */
 
     public PermissionEntity createPermission(String type) {

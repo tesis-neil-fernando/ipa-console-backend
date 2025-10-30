@@ -5,5 +5,5 @@ import jakarta.validation.constraints.NotBlank;
 /**
  * DTO used when creating a Role.
  */
-public record CreateRoleDTO(@NotBlank String name, String description) {
+public record CreateRoleDTO(@NotBlank String name) {
 }

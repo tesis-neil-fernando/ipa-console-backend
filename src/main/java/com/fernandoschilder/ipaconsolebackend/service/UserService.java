@@ -124,6 +124,49 @@ public class UserService {
     return userMapper.toViewDTO(e);
     }
 
+    /**
+     * List all users (non-paginated) as view DTOs.
+     */
+    public java.util.List<UserViewDTO> listAllUsers() {
+        return userRepository.findAll().stream().map(userMapper::toViewDTO).toList();
+    }
+
+    /**
+     * Replace user completely: username, password and roles. Returns view DTO.
+     */
+    @Transactional
+    public UserViewDTO replaceUser(String currentUsername, com.fernandoschilder.ipaconsolebackend.dto.UserReplaceDto dto) {
+        UserEntity user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new EntityNotFoundException("UserEntity Not Found with username: " + currentUsername));
+
+        String newUsername = dto.username();
+        if (newUsername != null && !newUsername.equals(currentUsername)) {
+            if (userRepository.existsByUsername(newUsername)) {
+                throw new EntityExistsException("Username " + newUsername + " already exists");
+            }
+            user.setUsername(newUsername);
+        }
+
+        if (dto.password() != null && !dto.password().isBlank()) {
+            user.setPassword(encoder.encode(dto.password()));
+        }
+
+        // roles
+        Set<RoleEntity> roles = new HashSet<>();
+        if (dto.roles() != null && !dto.roles().isEmpty()) {
+            List<RoleEntity> found = roleRepository.findByNameIn(dto.roles());
+            roles.addAll(found);
+            Set<String> foundNames = roles.stream().map(RoleEntity::getName).collect(Collectors.toSet());
+            Set<String> missing = dto.roles().stream().filter(rn -> !foundNames.contains(rn)).collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+            if (!missing.isEmpty()) {
+                throw new IllegalArgumentException("Roles not found: " + String.join(", ", missing));
+            }
+        }
+        user.setRoles(roles);
+        userRepository.save(user);
+        return userMapper.toViewDTO(user);
+    }
+
     /* =================== MAPPER (incluye namespaces) =================== */
 
     
