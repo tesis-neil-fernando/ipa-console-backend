@@ -48,7 +48,7 @@ public class RoleController {
     // Reemplazar permisos del rol (sobrescribe el set completo)
     @PutMapping("/{name}/permissions")
     public RoleDTO setPermissions(@PathVariable String name, @RequestBody SetPermsDTO req) {
-        return mapper.toRoleDto(roleService.setPermissionsToRole(name, req.permissions()));
+        return mapper.toRoleDto(roleService.setPermissionsToRoleByTypes(name, req.permissions()));
     }
 
     // Agregar permisos al rol (sin borrar los existentes)
@@ -60,7 +60,7 @@ public class RoleController {
     // Patch permissions including namespaces: accepts a richer DTO with namespaces for each permission
     @PatchMapping("/{name}/permissions/namespaces")
     public RoleDTO patchPermissionsWithNamespaces(@PathVariable String name, @RequestBody com.fernandoschilder.ipaconsolebackend.dto.SetPermsWithNamespacesDTO req) {
-        return mapper.toRoleDto(roleService.setPermissionsToRole(name, req.permissions()));
+        return mapper.toRoleDto(roleService.setPermissionsToRoleWithNamespaces(name, req.permissions()));
     }
 
     // DTOs moved to `com.fernandoschilder.ipaconsolebackend.dto` package:

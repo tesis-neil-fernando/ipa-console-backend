@@ -70,7 +70,7 @@ public class RbacController {
     public ResponseEntity<RbacResponse<RoleDTO>> createRole(@RequestBody @Valid CreateRoleWithPermsDTO req) {
     RoleEntity created = roleService.createRole(req.name());
         if (req.permissions() != null && !req.permissions().isEmpty()) {
-            roleService.setPermissionsToRole(created.getName(), req.permissions());
+            roleService.setPermissionsToRoleByTypes(created.getName(), req.permissions());
             created = roleService.getByName(created.getName());
         }
         RoleDTO resp = roleMapper.toRoleDto(created);
@@ -120,13 +120,13 @@ public class RbacController {
     // Patch a role (set its permissions)
     @PatchMapping("/roles/{name}/permissions")
     public RoleDTO patchRolePermissions(@PathVariable String name, @RequestBody SetPermsDTO body) {
-        return roleMapper.toRoleDto(roleService.setPermissionsToRole(name, body.permissions()));
+        return roleMapper.toRoleDto(roleService.setPermissionsToRoleByTypes(name, body.permissions()));
     }
 
     // Patch a role with namespaces per permission
     @PatchMapping("/roles/{name}/permissions/namespaces")
     public RoleDTO patchRolePermissionsWithNamespaces(@PathVariable String name, @RequestBody SetPermsWithNamespacesDTO body) {
-        return roleMapper.toRoleDto(roleService.setPermissionsToRole(name, body.permissions()));
+        return roleMapper.toRoleDto(roleService.setPermissionsToRoleWithNamespaces(name, body.permissions()));
     }
 
     // Replace (PUT) a role completely: name/description/permissions

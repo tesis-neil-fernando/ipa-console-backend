@@ -48,7 +48,7 @@ public class RoleService {
      * Si quieres “agregar sin reemplazar”, ajusta la lógica a addAll() sobre el set existente.
      */
     @Transactional
-    public RoleEntity setPermissionsToRole(String roleName, List<String> permissionTypes) {
+    public RoleEntity setPermissionsToRoleByTypes(String roleName, List<String> permissionTypes) {
         RoleEntity role = roleRepository.findByName(roleName)
                 .orElseThrow(() -> new EntityNotFoundException("Role not found: " + roleName));
 
@@ -68,7 +68,7 @@ public class RoleService {
      * on the Permission entity (replacing its namespaces).
      */
     @Transactional
-    public RoleEntity setPermissionsToRole(String roleName, List<com.fernandoschilder.ipaconsolebackend.dto.PermissionWithNamespacesDTO> permissionDtos) {
+    public RoleEntity setPermissionsToRoleWithNamespaces(String roleName, List<com.fernandoschilder.ipaconsolebackend.dto.PermissionWithNamespacesDTO> permissionDtos) {
         RoleEntity role = roleRepository.findByName(roleName)
                 .orElseThrow(() -> new EntityNotFoundException("Role not found: " + roleName));
 
