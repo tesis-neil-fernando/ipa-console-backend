@@ -2,7 +2,6 @@ package com.fernandoschilder.ipaconsolebackend.controller;
 
 import com.fernandoschilder.ipaconsolebackend.dto.ExecutionsListResponseDto;
 import com.fernandoschilder.ipaconsolebackend.service.ExecutionsService;
-import com.fernandoschilder.ipaconsolebackend.service.N8nApiService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +18,7 @@ public class ExecutionsController {
     }
 
     @GetMapping
-    public ResponseEntity<N8nApiService.ApiResponse<ExecutionsListResponseDto>> list(
+    public ResponseEntity<ExecutionsListResponseDto> list(
             @RequestParam(required = false) Boolean includeData,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String workflowId,
@@ -27,6 +26,7 @@ public class ExecutionsController {
             @RequestParam(required = false, defaultValue = "100") Integer limit,
             @RequestParam(required = false) String cursor
     ) {
-        return executionsService.listExecutions(includeData, status, workflowId, projectId, limit, cursor);
+        var res = executionsService.listExecutions(includeData, status, workflowId, projectId, limit, cursor);
+        return ResponseEntity.ok(res);
     }
 }

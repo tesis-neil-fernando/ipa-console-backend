@@ -2,6 +2,7 @@ package com.fernandoschilder.ipaconsolebackend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -29,7 +30,7 @@ public class UserEntity {
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<RoleEntity> roles;
+    private Set<RoleEntity> roles = new HashSet<>();
 
     public UserEntity() {
     }
@@ -78,6 +79,19 @@ public class UserEntity {
 
     public void setRoles(Set<RoleEntity> roles) {
         this.roles = roles;
+    }
+
+    public void addRole(RoleEntity role) {
+        if (role == null) return;
+        this.roles.add(role);
+        if (role.getUsers() == null) role.setUsers(new HashSet<>());
+        role.getUsers().add(this);
+    }
+
+    public void removeRole(RoleEntity role) {
+        if (role == null) return;
+        if (this.roles != null) this.roles.remove(role);
+        if (role.getUsers() != null) role.getUsers().remove(this);
     }
 
     @Override

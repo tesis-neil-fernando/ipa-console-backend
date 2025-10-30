@@ -3,6 +3,7 @@ package com.fernandoschilder.ipaconsolebackend.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -24,12 +25,12 @@ public class NamespaceEntity {
     // Evita recursion infinita en JSON
     @JsonIgnore
     @ManyToMany(mappedBy = "namespaces", fetch = FetchType.LAZY)
-    private Set<PermissionEntity> permissions;
+    private Set<PermissionEntity> permissions = new HashSet<>();
 
     // Si tus procesos tienen un campo "namespace", esto se mantiene
     @JsonIgnore
     @OneToMany(mappedBy = "namespace", fetch = FetchType.LAZY)
-    private Set<ProcessEntity> processes;
+    private Set<ProcessEntity> processes = new HashSet<>();
 
     public NamespaceEntity() {
     }
@@ -70,12 +71,39 @@ public class NamespaceEntity {
         this.permissions = permissions;
     }
 
+    public void addPermission(PermissionEntity permission) {
+        if (permission == null) return;
+        if (this.permissions == null) this.permissions = new HashSet<>();
+        this.permissions.add(permission);
+        if (permission.getNamespaces() == null) permission.setNamespaces(new HashSet<>());
+        permission.getNamespaces().add(this);
+    }
+
+    public void removePermission(PermissionEntity permission) {
+        if (permission == null) return;
+        if (this.permissions != null) this.permissions.remove(permission);
+        if (permission.getNamespaces() != null) permission.getNamespaces().remove(this);
+    }
+
     public Set<ProcessEntity> getProcesses() {
         return processes;
     }
 
     public void setProcesses(Set<ProcessEntity> processes) {
         this.processes = processes;
+    }
+
+    public void addProcess(ProcessEntity process) {
+        if (process == null) return;
+        if (this.processes == null) this.processes = new HashSet<>();
+        this.processes.add(process);
+        process.setNamespace(this);
+    }
+
+    public void removeProcess(ProcessEntity process) {
+        if (process == null) return;
+        if (this.processes != null) this.processes.remove(process);
+        if (process != null) process.setNamespace(null);
     }
 
     @Override

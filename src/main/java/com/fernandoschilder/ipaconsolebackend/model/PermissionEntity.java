@@ -2,6 +2,7 @@ package com.fernandoschilder.ipaconsolebackend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -20,17 +21,17 @@ public class PermissionEntity {
     // Inverso de RoleEntity.role_permissions  (¡ojo al nombre!)
     @JsonIgnore
     @ManyToMany(mappedBy = "permissions", fetch = FetchType.LAZY)
-    private Set<RoleEntity> roles;
+    private Set<RoleEntity> roles = new HashSet<>();
 
     // (Opcional) Permisos aplicados a namespaces
     @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "permission_namespaces",
-            joinColumns = @JoinColumn(name = "permission_id"),
-            inverseJoinColumns = @JoinColumn(name = "namespace_id")
+        name = "permission_namespaces",
+        joinColumns = @JoinColumn(name = "permission_id"),
+        inverseJoinColumns = @JoinColumn(name = "namespace_id")
     )
-    private Set<NamespaceEntity> namespaces;
+    private Set<NamespaceEntity> namespaces = new HashSet<>();
 
     public PermissionEntity() {
     }
@@ -63,12 +64,40 @@ public class PermissionEntity {
         this.roles = roles;
     }
 
+    public void addRole(RoleEntity role) {
+        if (role == null) return;
+        if (this.roles == null) this.roles = new HashSet<>();
+        this.roles.add(role);
+        if (role.getPermissions() == null) role.setPermissions(new HashSet<>());
+        role.getPermissions().add(this);
+    }
+
+    public void removeRole(RoleEntity role) {
+        if (role == null) return;
+        if (this.roles != null) this.roles.remove(role);
+        if (role.getPermissions() != null) role.getPermissions().remove(this);
+    }
+
     public Set<NamespaceEntity> getNamespaces() {
         return namespaces;
     }
 
     public void setNamespaces(Set<NamespaceEntity> namespaces) {
         this.namespaces = namespaces;
+    }
+
+    public void addNamespace(NamespaceEntity ns) {
+        if (ns == null) return;
+        if (this.namespaces == null) this.namespaces = new HashSet<>();
+        this.namespaces.add(ns);
+        if (ns.getPermissions() == null) ns.setPermissions(new HashSet<>());
+        ns.getPermissions().add(this);
+    }
+
+    public void removeNamespace(NamespaceEntity ns) {
+        if (ns == null) return;
+        if (this.namespaces != null) this.namespaces.remove(ns);
+        if (ns.getPermissions() != null) ns.getPermissions().remove(this);
     }
 
     @Override

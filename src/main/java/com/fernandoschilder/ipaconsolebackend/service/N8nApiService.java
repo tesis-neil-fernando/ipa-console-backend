@@ -325,8 +325,18 @@ public class N8nApiService {
 
     /* --- typed n8n shapes used by the client --- */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static record N8nExecution(String id, String status, Boolean finished,
-                                      String startedAt, String stoppedAt, String workflowId) {}
+    public static record N8nExecution(
+        String id,
+        String status,
+        Boolean finished,
+        String startedAt,
+        String stoppedAt,
+        String workflowId,
+        String mode,
+        String retryOf,
+        String retrySuccessId,
+        String waitTill
+    ) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static record N8nExecutionsEnvelope(java.util.List<N8nExecution> data, String nextCursor) {}
