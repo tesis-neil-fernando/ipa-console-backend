@@ -177,22 +177,34 @@ public class ProcessService {
             process.setDescription(dto.description());
         }
 
-        var currentParams = process.getParameters().stream().collect(java.util.stream.Collectors.toMap(ParameterEntity::getId, p -> p));
+        if (dto.parameters() != null) {
+            var currentParams = process.getParameters().stream().collect(java.util.stream.Collectors.toMap(ParameterEntity::getId, p -> p));
 
-        for (var pEdit : dto.parameters()) {
-            var existing = currentParams.get(pEdit.id());
-            if (existing == null) {
-                throw new EntityNotFoundException("Parameter " + pEdit.id() + " not found on process " + processId);
-            }
+            for (var pEdit : dto.parameters()) {
+                // If id is null -> create a new parameter on the process
+                if (pEdit.id() == null) {
+                    var pe = new ParameterEntity();
+                    if (pEdit.name() != null && !pEdit.name().isBlank()) pe.setName(pEdit.name());
+                    if (pEdit.value() != null) pe.setValue(pEdit.value());
+                    if (pEdit.type() != null && !pEdit.type().isBlank()) pe.setType(pEdit.type());
+                    process.addParameter(pe);
+                    continue;
+                }
 
-            if (pEdit.name() != null && !pEdit.name().isBlank()) {
-                existing.setName(pEdit.name());
-            }
-            if (pEdit.value() != null) {
-                existing.setValue(pEdit.value());
-            }
-            if (pEdit.type() != null && !pEdit.type().isBlank()) {
-                existing.setType(pEdit.type());
+                var existing = currentParams.get(pEdit.id());
+                if (existing == null) {
+                    throw new EntityNotFoundException("Parameter " + pEdit.id() + " not found on process " + processId);
+                }
+
+                if (pEdit.name() != null && !pEdit.name().isBlank()) {
+                    existing.setName(pEdit.name());
+                }
+                if (pEdit.value() != null) {
+                    existing.setValue(pEdit.value());
+                }
+                if (pEdit.type() != null && !pEdit.type().isBlank()) {
+                    existing.setType(pEdit.type());
+                }
             }
         }
 
