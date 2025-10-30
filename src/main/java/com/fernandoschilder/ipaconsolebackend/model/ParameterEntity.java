@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.util.Objects;
 
 @Entity
-@Table(name = "parameters")
+@Table(name = "parameters", indexes = {@Index(name = "idx_parameters_process", columnList = "process_id")})
 public class ParameterEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

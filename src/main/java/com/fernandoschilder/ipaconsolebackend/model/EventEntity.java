@@ -2,11 +2,11 @@ package com.fernandoschilder.ipaconsolebackend.model;
 
 import jakarta.persistence.*;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Objects;
 
 @Entity
-@Table(name = "events")
+@Table(name = "events", indexes = {@Index(name = "idx_events_process", columnList = "process_id")})
 public class EventEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -14,8 +14,7 @@ public class EventEntity {
     private Long id;
 
     @Column(name = "time")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date time;
+    private Instant time;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "process_id", nullable = false)
@@ -30,7 +29,7 @@ public class EventEntity {
     public EventEntity() {
     }
 
-    public EventEntity(Date time, ProcessEntity process, String type, String message) {
+    public EventEntity(Instant time, ProcessEntity process, String type, String message) {
         this.time = time;
         this.process = process;
         this.type = type;
@@ -45,11 +44,11 @@ public class EventEntity {
         this.id = id;
     }
 
-    public Date getTime() {
+    public Instant getTime() {
         return time;
     }
 
-    public void setTime(Date time) {
+    public void setTime(Instant time) {
         this.time = time;
     }
 

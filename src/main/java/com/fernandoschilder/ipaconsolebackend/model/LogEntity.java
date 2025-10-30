@@ -6,7 +6,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 @Entity
-@Table(name = "logs")
+@Table(name = "logs", indexes = {@Index(name = "idx_logs_process", columnList = "process_id"), @Index(name = "idx_logs_user", columnList = "user_id")})
 public class LogEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Entity
-@Table(name = "workflows")
+@Table(name = "workflows", indexes = {@Index(name = "idx_workflows_active", columnList = "active")})
 public class WorkflowEntity {
     @Id
     @Column(length = 64, name = "workflow_id")
@@ -22,7 +22,13 @@ public class WorkflowEntity {
     @Column(name = "raw_json", columnDefinition = "text")
     private String rawJson;
 
-    @OneToOne(mappedBy = "workflow", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
+    /**
+     * Inverse side of the OneToOne with ProcessEntity.
+     * Note: JPA providers may ignore LAZY on OneToOne mappings unless bytecode enhancement or provider-specific
+     * proxying is enabled (for example Hibernate's bytecode instrumentation or @LazyToOne).
+     * If you rely on lazy-loading here, enable enhancement or consider mapping changes.
+     */
+    @OneToOne(mappedBy = "workflow", fetch = FetchType.LAZY, optional = true)
     private ProcessEntity process;
 
     @ManyToMany(fetch = FetchType.LAZY)

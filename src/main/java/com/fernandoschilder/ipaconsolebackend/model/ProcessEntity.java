@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Entity
-@Table(name = "processes")
+@Table(name = "processes", indexes = {@Index(name = "idx_processes_namespace", columnList = "namespace_id")})
 public class ProcessEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,7 +24,7 @@ public class ProcessEntity {
     @Column(name = "description")
     private String description;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "workflow_id", unique = true)
     private WorkflowEntity workflow;
 

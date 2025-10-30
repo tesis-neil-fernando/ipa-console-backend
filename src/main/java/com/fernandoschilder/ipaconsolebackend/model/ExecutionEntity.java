@@ -5,7 +5,12 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "executions", indexes = {@Index(name = "idx_execution_id", columnList = "execution_id", unique = true)})
+@Table(name = "executions", indexes = {
+    @Index(name = "idx_execution_id", columnList = "execution_id", unique = true),
+    @Index(name = "idx_executions_workflow", columnList = "workflow_id"),
+    @Index(name = "idx_executions_status", columnList = "status"),
+    @Index(name = "idx_executions_created_at", columnList = "created_at")
+})
 public class ExecutionEntity {
 
     @Id
