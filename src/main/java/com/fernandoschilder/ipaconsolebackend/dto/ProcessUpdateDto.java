@@ -5,5 +5,5 @@ import java.util.List;
 
 public record ProcessUpdateDto(String name,   // optional edit
                                String description, // optional edit
-                               @Valid List<ParameterEditDto> parameters) {
+                               @Valid List<ParameterUpdateDto> parameters) {
 }

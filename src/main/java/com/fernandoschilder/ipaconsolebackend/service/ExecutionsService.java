@@ -2,7 +2,7 @@ package com.fernandoschilder.ipaconsolebackend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fernandoschilder.ipaconsolebackend.dto.ExecutionResponseDto;
-import com.fernandoschilder.ipaconsolebackend.dto.ExecutionsListResponseDto;
+import com.fernandoschilder.ipaconsolebackend.dto.PageResponse;
 import com.fernandoschilder.ipaconsolebackend.model.ExecutionEntity;
 import com.fernandoschilder.ipaconsolebackend.model.ProcessEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.ExecutionRepository;
@@ -33,7 +33,7 @@ public class ExecutionsService {
         this.executionRepository = executionRepository;
     }
 
-    public ExecutionsListResponseDto listExecutions(
+    public PageResponse<ExecutionResponseDto> listExecutions(
             Boolean includeData, String status, String workflowId, String projectId,
             Integer limit, String cursor) {
 
@@ -73,7 +73,7 @@ public class ExecutionsService {
                 nextCursor = summaries.get(summaries.size() - 1).getExecutionId();
             }
 
-            return new ExecutionsListResponseDto(mapped, nextCursor);
+            return PageResponse.of(mapped, nextCursor);
         }
 
     var envelope = n8nApiService.fetchExecutions(includeData, status, workflowId, projectId, limit, null);
@@ -97,7 +97,7 @@ public class ExecutionsService {
     String nextCursor = null;
     if (!mapped.isEmpty()) nextCursor = mapped.get(mapped.size() - 1).id();
 
-    return new ExecutionsListResponseDto(mapped, nextCursor);
+    return PageResponse.of(mapped, nextCursor);
     }
 
     private static Instant parseTs(String iso) {

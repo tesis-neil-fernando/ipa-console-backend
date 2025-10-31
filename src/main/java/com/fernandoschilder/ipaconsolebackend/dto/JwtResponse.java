@@ -1,6 +1,9 @@
 package com.fernandoschilder.ipaconsolebackend.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /** Minimal JWT response holder without Lombok. */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class JwtResponse {
     private String token;
     private String type = "Bearer";

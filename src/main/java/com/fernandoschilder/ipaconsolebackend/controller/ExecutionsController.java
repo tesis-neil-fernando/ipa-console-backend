@@ -1,6 +1,7 @@
 package com.fernandoschilder.ipaconsolebackend.controller;
 
-import com.fernandoschilder.ipaconsolebackend.dto.ExecutionsListResponseDto;
+import com.fernandoschilder.ipaconsolebackend.dto.ExecutionResponseDto;
+import com.fernandoschilder.ipaconsolebackend.dto.PageResponse;
 import com.fernandoschilder.ipaconsolebackend.service.ExecutionsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -23,7 +24,7 @@ public class ExecutionsController {
     }
 
     @GetMapping
-    public ResponseEntity<ExecutionsListResponseDto> list(
+    public ResponseEntity<PageResponse<ExecutionResponseDto>> list(
             @RequestParam(required = false) Boolean includeData,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String workflowId,
