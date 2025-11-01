@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,14 +20,17 @@ public class RbacServiceImpl implements RbacService {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final ProcessRepository processRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public RbacServiceImpl(NamespaceRepository namespaceRepository, PermissionRepository permissionRepository,
-                           RoleRepository roleRepository, UserRepository userRepository, ProcessRepository processRepository) {
+                           RoleRepository roleRepository, UserRepository userRepository, ProcessRepository processRepository,
+                           PasswordEncoder passwordEncoder) {
         this.namespaceRepository = namespaceRepository;
         this.permissionRepository = permissionRepository;
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
         this.processRepository = processRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // Assumption: permission.type must be unique across the system. To create namespace-scoped
@@ -78,6 +82,31 @@ public class RbacServiceImpl implements RbacService {
         RoleEntity r = new RoleEntity(name);
         r = roleRepository.save(r);
         return toRoleDto(r);
+    }
+
+    @Override
+    public UserRbacDto createUser(String username, String password, String name) {
+        if (username == null || username.trim().isEmpty()) throw new IllegalArgumentException("username required");
+        if (password == null || password.trim().isEmpty()) throw new IllegalArgumentException("password required");
+        if (userRepository.existsByUsername(username)) throw new IllegalArgumentException("username already exists");
+
+        String encoded = passwordEncoder.encode(password);
+        // create user with provided name (may be null) and enabled by default
+        UserEntity u = new UserEntity(username, name, encoded, true);
+        u = userRepository.save(u);
+        return toUserDto(u);
+    }
+
+    @Override
+    public void updateUserEnabled(Long userId, boolean enabled) {
+        if (userId == null) throw new IllegalArgumentException("user id required");
+        // Prevent changing the enabled state of the system user (id == 1)
+        if (Objects.equals(userId, 1L)) {
+            throw new IllegalStateException("cannot change enabled state of system user");
+        }
+        UserEntity u = userRepository.findById(userId).orElseThrow(() -> new NoSuchElementException("user not found"));
+        u.setEnabled(enabled);
+        userRepository.save(u);
     }
 
     @Override
@@ -150,11 +179,86 @@ public class RbacServiceImpl implements RbacService {
         return processRepository.findAll().stream().map(this::toProcessDto).collect(Collectors.toList());
     }
 
+    @Override
+    public void updatePassword(Long userId, String newPassword) {
+        if (userId == null) throw new IllegalArgumentException("user id required");
+        if (newPassword == null || newPassword.trim().isEmpty()) throw new IllegalArgumentException("password required");
+        UserEntity u = userRepository.findById(userId).orElseThrow(() -> new NoSuchElementException("user not found"));
+        u.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(u);
+    }
+
+    @Override
+    public void updateProcess(Long processId, String name, String description) {
+        if (processId == null) throw new IllegalArgumentException("process id required");
+        ProcessEntity p = processRepository.findById(processId).orElseThrow(() -> new NoSuchElementException("process not found"));
+        if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("process name required");
+        p.setName(name);
+        p.setDescription(description);
+        processRepository.save(p);
+    }
+
+    @Override
+    public void updateUserName(Long userId, String name) {
+        if (userId == null) throw new IllegalArgumentException("user id required");
+        if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("name required");
+        UserEntity u = userRepository.findById(userId).orElseThrow(() -> new NoSuchElementException("user not found"));
+        u.setName(name);
+        userRepository.save(u);
+    }
+
+    @Override
+    public void updateNamespaceName(Long namespaceId, String name) {
+        if (namespaceId == null) throw new IllegalArgumentException("namespace id required");
+        if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("namespace name required");
+        NamespaceEntity ns = namespaceRepository.findById(namespaceId).orElseThrow(() -> new NoSuchElementException("namespace not found"));
+        // if same name, nothing to do
+        if (Objects.equals(ns.getName(), name)) return;
+        // ensure no other namespace already uses the name
+        namespaceRepository.findByName(name).ifPresent(existing -> {
+            if (!Objects.equals(existing.getId(), ns.getId())) throw new IllegalArgumentException("namespace already exists");
+        });
+
+        // update permission types which follow the pattern "<namespace>:<perm>"
+        if (ns.getPermissions() != null) {
+            for (PermissionEntity p : ns.getPermissions()) {
+                String oldType = p.getType();
+                int idx = oldType.indexOf(':');
+                String suffix = (idx >= 0) ? oldType.substring(idx + 1) : oldType;
+                String newType = name + ":" + suffix;
+                // check for conflicts
+                permissionRepository.findByType(newType).ifPresent(conflict -> {
+                    if (!Objects.equals(conflict.getId(), p.getId())) throw new IllegalArgumentException("permission type conflict when renaming namespace");
+                });
+                p.setType(newType);
+                permissionRepository.save(p);
+            }
+        }
+
+        ns.setName(name);
+        namespaceRepository.save(ns);
+    }
+
+    @Override
+    public void updateRoleName(Long roleId, String name) {
+        if (roleId == null) throw new IllegalArgumentException("role id required");
+        if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("role name required");
+        RoleEntity r = roleRepository.findById(roleId).orElseThrow(() -> new NoSuchElementException("role not found"));
+        if (Objects.equals(r.getName(), name)) return;
+        roleRepository.findByName(name).ifPresent(existing -> {
+            if (!Objects.equals(existing.getId(), r.getId())) throw new IllegalArgumentException("role already exists");
+        });
+        r.setName(name);
+        roleRepository.save(r);
+    }
+
     // --- Converters ---
     private UserRbacDto toUserDto(UserEntity u) {
         UserRbacDto dto = new UserRbacDto();
         dto.setId(u.getId());
         dto.setUsername(u.getUsername());
+        dto.setName(u.getName());
+        dto.setEnabled(u.isEnabled());
         if (u.getRoles() != null) {
             dto.setRoles(u.getRoles().stream().map(r -> {
                 RoleRefDto rr = new RoleRefDto(); rr.setId(r.getId()); rr.setName(r.getName()); return rr;
@@ -203,6 +307,7 @@ public class RbacServiceImpl implements RbacService {
         if (ns.getProcesses() != null) {
             dto.setProcesses(ns.getProcesses().stream().map(p -> {
                 ProcessRbacDto pr = new ProcessRbacDto(); pr.setId(p.getId()); pr.setName(p.getName());
+                    pr.setDescription(p.getDescription());
                 if (p.getNamespace() != null) { pr.setNamespaceId(p.getNamespace().getId()); pr.setNamespaceName(p.getNamespace().getName()); }
                 return pr;
             }).collect(Collectors.toList()));
@@ -213,6 +318,7 @@ public class RbacServiceImpl implements RbacService {
     private ProcessRbacDto toProcessDto(ProcessEntity p) {
         ProcessRbacDto dto = new ProcessRbacDto();
         dto.setId(p.getId()); dto.setName(p.getName());
+        dto.setDescription(p.getDescription());
         if (p.getNamespace() != null) {
             dto.setNamespaceId(p.getNamespace().getId()); dto.setNamespaceName(p.getNamespace().getName());
         }

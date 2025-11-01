@@ -21,6 +21,10 @@ public class UserEntity {
     @Size(max = 120)
     private String username;
 
+    @Column(name = "name", length = 120)
+    @Size(max = 120)
+    private String name;
+
     @Column(name = "password")
     @JsonIgnore
     private String password;
@@ -41,6 +45,13 @@ public class UserEntity {
         this.enabled = enabled;
     }
 
+    public UserEntity(String username, String name, String password, boolean enabled) {
+        this.username = username;
+        this.name = name;
+        this.password = password;
+        this.enabled = enabled;
+    }
+
     public Long getId() {
         return id;
     }
@@ -55,6 +66,14 @@ public class UserEntity {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getPassword() {

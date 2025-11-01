@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fernandoschilder.ipaconsolebackend.service.rbac.RbacService;
 import com.fernandoschilder.ipaconsolebackend.dto.rbac.*;
+import com.fernandoschilder.ipaconsolebackend.dto.rbac.UpdateProcessRequest;
+import com.fernandoschilder.ipaconsolebackend.dto.rbac.UpdateNameRequest;
 
 import java.util.List;
 
@@ -44,6 +46,13 @@ public class RbacController {
     @PostMapping("/roles")
     public ResponseEntity<RoleRbacDto> createRole(@RequestBody CreateRoleRequest req) {
         RoleRbacDto dto = rbacService.createRole(req.getName());
+        return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping("/users")
+    public ResponseEntity<UserRbacDto> createUser(@RequestBody CreateUserRequest req) {
+        // accept optional name; newly created users are enabled by default
+        UserRbacDto dto = rbacService.createUser(req.getUsername(), req.getPassword(), req.getName());
         return ResponseEntity.ok(dto);
     }
 
@@ -104,6 +113,43 @@ public class RbacController {
     @GetMapping("/processes")
     public ResponseEntity<List<ProcessRbacDto>> listProcesses() {
         return ResponseEntity.ok(rbacService.listProcesses());
+    }
+
+    @PutMapping("/users/password")
+    public ResponseEntity<Void> updatePassword(@RequestBody UpdatePasswordRequest req) {
+        // Request contains the user id and the new password (admin operation)
+        rbacService.updatePassword(req.getId(), req.getPassword());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/users/{id}/enabled")
+    public ResponseEntity<Void> updateUserEnabled(@PathVariable Long id, @RequestBody UpdateUserEnabledRequest req) {
+        rbacService.updateUserEnabled(id, req.getEnabled());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/processes/{id}")
+    public ResponseEntity<Void> updateProcess(@PathVariable Long id, @RequestBody UpdateProcessRequest req) {
+        rbacService.updateProcess(id, req.getName(), req.getDescription());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/users/{id}/name")
+    public ResponseEntity<Void> updateUserName(@PathVariable Long id, @RequestBody UpdateNameRequest req) {
+        rbacService.updateUserName(id, req.getName());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/namespaces/{id}")
+    public ResponseEntity<Void> updateNamespaceName(@PathVariable Long id, @RequestBody UpdateNameRequest req) {
+        rbacService.updateNamespaceName(id, req.getName());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/roles/{id}")
+    public ResponseEntity<Void> updateRoleName(@PathVariable Long id, @RequestBody UpdateNameRequest req) {
+        rbacService.updateRoleName(id, req.getName());
+        return ResponseEntity.ok().build();
     }
 
 }

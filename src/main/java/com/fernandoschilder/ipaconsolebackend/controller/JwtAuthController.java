@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.annotation.Validated;
+import jakarta.validation.Valid;
 
 
 @RestController
@@ -29,10 +30,15 @@ public class JwtAuthController {
     }
 
 
-    @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
 
-    Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
+    @PostMapping("/signin")
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+
+        // defensive trim to avoid accidental leading/trailing spaces
+        final String username = loginRequest.username() == null ? "" : loginRequest.username().trim();
+        final String password = loginRequest.password();
+
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
 
         SecurityContextHolder.getContext()
                 .setAuthentication(authentication);
@@ -46,10 +52,18 @@ public class JwtAuthController {
 
     @GetMapping("/valid")
     public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing Authorization header");
+        }
+        String ah = authHeader.trim();
+        if (!ah.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing or invalid Authorization header");
         }
-        String token = authHeader.substring("Bearer ".length());
+        String token = ah.substring("Bearer ".length()).trim();
+        // basic length sanity check (reject absurdly long tokens)
+        if (token.length() > 4096) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Authorization token too long");
+        }
         if (jwtUtils.validateJwtToken(token)) {
             return ResponseEntity.ok().body(true);
         }

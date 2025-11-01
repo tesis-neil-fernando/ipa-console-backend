@@ -13,6 +13,8 @@ public interface RbacService {
 
     RoleRbacDto createRole(String name);
 
+    UserRbacDto createUser(String username, String password, String name);
+
     void assignPermissionToRole(Long roleId, Long permissionId);
 
     void removePermissionFromRole(Long roleId, Long permissionId);
@@ -34,4 +36,17 @@ public interface RbacService {
     List<NamespaceRbacDto> listNamespaces();
 
     List<ProcessRbacDto> listProcesses();
+
+    void updatePassword(Long userId, String newPassword);
+
+    void updateUserEnabled(Long userId, boolean enabled);
+
+    // Update operations
+    void updateProcess(Long processId, String name, String description);
+
+    void updateUserName(Long userId, String name);
+
+    void updateNamespaceName(Long namespaceId, String name);
+
+    void updateRoleName(Long roleId, String name);
 }
