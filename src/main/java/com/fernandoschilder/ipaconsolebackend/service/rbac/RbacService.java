@@ -13,7 +13,7 @@ public interface RbacService {
 
     RoleRbacDto createRole(String name);
 
-    UserRbacDto createUser(String username, String password, String name);
+    CreateUserResponse createUser(String username, String name);
 
     void assignPermissionToRole(Long roleId, Long permissionId);
 

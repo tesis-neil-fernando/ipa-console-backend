@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.security.SecureRandom;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.stream.Collectors;
 
@@ -85,16 +86,31 @@ public class RbacServiceImpl implements RbacService {
     }
 
     @Override
-    public UserRbacDto createUser(String username, String password, String name) {
+    public CreateUserResponse createUser(String username, String name) {
         if (username == null || username.trim().isEmpty()) throw new IllegalArgumentException("username required");
-        if (password == null || password.trim().isEmpty()) throw new IllegalArgumentException("password required");
         if (userRepository.existsByUsername(username)) throw new IllegalArgumentException("username already exists");
 
-        String encoded = passwordEncoder.encode(password);
+        // Generate a secure random password and encode it for storage
+        String generatedPassword = generatePassword(12);
+        String encoded = passwordEncoder.encode(generatedPassword);
+
         // create user with provided name (may be null) and enabled by default
         UserEntity u = new UserEntity(username, name, encoded, true);
         u = userRepository.save(u);
-        return toUserDto(u);
+
+    CreateUserResponse resp =
+        new CreateUserResponse(u.getUsername(), generatedPassword);
+    return resp;
+    }
+
+    private String generatePassword(int length) {
+        final String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom rnd = new SecureRandom();
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(rnd.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     @Override

@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fernandoschilder.ipaconsolebackend.service.rbac.RbacService;
 import com.fernandoschilder.ipaconsolebackend.dto.rbac.*;
-import com.fernandoschilder.ipaconsolebackend.dto.rbac.UpdateProcessRequest;
-import com.fernandoschilder.ipaconsolebackend.dto.rbac.UpdateNameRequest;
 
 import java.util.List;
 
@@ -26,9 +24,10 @@ public class RbacController {
     }
 
     @PostMapping("/namespaces")
-    public ResponseEntity<NamespaceRbacDto> createNamespace(@RequestBody CreateNamespaceRequest req) {
+    public ResponseEntity<CreateResponse> createNamespace(@RequestBody CreateNamespaceRequest req) {
         NamespaceRbacDto dto = rbacService.createNamespace(req.getName());
-        return ResponseEntity.ok(dto);
+        CreateResponse resp = new CreateResponse(true, dto.getId());
+        return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/namespaces/{nsId}/processes/{processId}")
@@ -44,16 +43,18 @@ public class RbacController {
     }
 
     @PostMapping("/roles")
-    public ResponseEntity<RoleRbacDto> createRole(@RequestBody CreateRoleRequest req) {
+    public ResponseEntity<CreateResponse> createRole(@RequestBody CreateRoleRequest req) {
         RoleRbacDto dto = rbacService.createRole(req.getName());
-        return ResponseEntity.ok(dto);
+        CreateResponse resp = new CreateResponse(true, dto.getId());
+        return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/users")
-    public ResponseEntity<UserRbacDto> createUser(@RequestBody CreateUserRequest req) {
+    public ResponseEntity<CreateUserResponse> createUser(@RequestBody CreateUserRequest req) {
         // accept optional name; newly created users are enabled by default
-        UserRbacDto dto = rbacService.createUser(req.getUsername(), req.getPassword(), req.getName());
-        return ResponseEntity.ok(dto);
+        // Delegate password generation and user creation to the service
+        CreateUserResponse resp = rbacService.createUser(req.getUsername(), req.getName());
+        return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/roles/{roleId}/permissions/{permissionId}")
