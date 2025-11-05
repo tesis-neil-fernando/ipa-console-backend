@@ -1,0 +1,4 @@
+services:
+  app:
+    extra_hosts:
+      - "${N8N_DNS}:${N8N_PRIVATE_IP}"
