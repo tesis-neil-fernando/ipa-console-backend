@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class ExecutionsController {
     private final ExecutionsService executionsService;
 
-    private static final int DEFAULT_LIMIT = 50;
-    private static final int MAX_LIMIT = 200;
+    private static final int DEFAULT_LIMIT = 20;
+    private static final int MAX_LIMIT = 50;
 
     public ExecutionsController(ExecutionsService executionsService) {
         this.executionsService = executionsService;
@@ -33,8 +33,11 @@ public class ExecutionsController {
             @RequestParam(required = false) String cursor
     ) {
         int lim = (limit == null) ? DEFAULT_LIMIT : limit;
-        if (lim <= 0 || lim > MAX_LIMIT) {
-            throw new IllegalArgumentException("limit must be between 1 and " + MAX_LIMIT);
+        if (lim <= 0) {
+            throw new IllegalArgumentException("limit must be >= 1");
+        }
+        if (lim > MAX_LIMIT) {
+            lim = MAX_LIMIT; // clamp to max instead of erroring for better UX
         }
         var res = executionsService.listExecutions(includeData, status, workflowId, projectId, lim, cursor);
         return ResponseEntity.ok(res);
