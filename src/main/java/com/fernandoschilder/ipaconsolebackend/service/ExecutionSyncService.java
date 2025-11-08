@@ -43,7 +43,10 @@ public class ExecutionSyncService {
             do {
                 var resp = n8nApiService.getExecutions(false, null, null, null, 10, cursor);
                 if (resp == null || resp.getBody() == null || !resp.getStatusCode().is2xxSuccessful()) {
-                    log.warn("No response or non-2xx from n8n executions endpoint");
+                    // include status and body when available to aid debugging
+                    Object respBody = resp == null ? null : resp.getBody();
+                    Integer status = resp == null ? null : resp.getStatusCodeValue();
+                    log.warn("No response or non-2xx from n8n executions endpoint, status={}, body={}", status, respBody);
                     break;
                 }
                 var api = resp.getBody();
