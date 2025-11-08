@@ -111,6 +111,16 @@ public class N8nApiService {
             return ResponseEntity.ok(new ApiResponse<>(true, "Ejecuciones obtenidas correctamente", response));
 
         } catch (Exception e) {
+            if (e instanceof WebClientResponseException wre) {
+                // Log upstream status and body to help debugging
+                try {
+                    log.warn("n8n executions endpoint returned status {}: {}", wre.getRawStatusCode(), wre.getResponseBodyAsString());
+                } catch (Exception ignore) {
+                    log.warn("n8n executions endpoint returned status {} (body unreadable)", wre.getRawStatusCode());
+                }
+            } else {
+                log.error("Error fetching executions from n8n", e);
+            }
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(false, "Error al obtener ejecuciones: " + e.getMessage(), null));
@@ -259,6 +269,15 @@ public class N8nApiService {
             return ResponseEntity.ok(new ApiResponse<>(true, "Ejecuciones obtenidas correctamente", envelope));
 
         } catch (Exception e) {
+            if (e instanceof WebClientResponseException wre) {
+                try {
+                    log.warn("n8n executions endpoint returned status {}: {}", wre.getRawStatusCode(), wre.getResponseBodyAsString());
+                } catch (Exception ignore) {
+                    log.warn("n8n executions endpoint returned status {} (body unreadable)", wre.getRawStatusCode());
+                }
+            } else {
+                log.error("Error fetching executions from n8n", e);
+            }
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(false, "Error al obtener ejecuciones: " + e.getMessage(), null));
