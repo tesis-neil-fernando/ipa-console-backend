@@ -8,18 +8,18 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
-public class N8nJob {
+public class WorkflowsIngestJob {
 
-    private static final Logger log = LoggerFactory.getLogger(N8nJob.class);
+    private static final Logger log = LoggerFactory.getLogger(WorkflowsIngestJob.class);
 
     private final WorkflowSyncService workflowSyncService;
 
-    public N8nJob(WorkflowSyncService workflowSyncService) {
+    public WorkflowsIngestJob(WorkflowSyncService workflowSyncService) {
         this.workflowSyncService = workflowSyncService;
     }
 
     @Scheduled(cron = "${fernandoschilder.app.cron.retrieve-workflows}", zone = "America/Lima")
-    public void retrieveWorkflows() {
+    public void run() {
         long t0 = System.currentTimeMillis();
         try {
             SyncSummary summary = workflowSyncService.pullAndSave();
