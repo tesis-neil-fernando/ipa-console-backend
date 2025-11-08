@@ -41,7 +41,7 @@ public class ExecutionSyncService {
             boolean stopBecauseExisting = false;
 
             do {
-                var resp = n8nApiService.getExecutions(true, null, null, null, 100, cursor);
+                var resp = n8nApiService.getExecutions(false, null, null, null, 10, cursor);
                 if (resp == null || resp.getBody() == null || !resp.getStatusCode().is2xxSuccessful()) {
                     log.warn("No response or non-2xx from n8n executions endpoint");
                     break;
