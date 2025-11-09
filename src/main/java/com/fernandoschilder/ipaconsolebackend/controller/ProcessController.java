@@ -68,4 +68,9 @@ public class ProcessController {
         return processService.update(id, dto);
     }
 
+    @DeleteMapping("/{processId}/parameters/{parameterId}")
+    public ResponseEntity<?> deleteParameter(@PathVariable Long processId, @PathVariable Long parameterId) {
+        return processService.deleteParameter(processId, parameterId);
+    }
+
 }

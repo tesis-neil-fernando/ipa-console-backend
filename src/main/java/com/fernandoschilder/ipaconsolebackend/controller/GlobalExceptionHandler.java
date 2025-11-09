@@ -15,6 +15,8 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import java.util.Arrays;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -152,6 +154,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
         var resp = build(HttpStatus.BAD_REQUEST, "Invalid parameter: " + ex.getMessage(), request.getRequestURI());
         return ResponseEntity.badRequest().body(resp);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        String[] supported = ex.getSupportedMethods();
+        String methods = supported == null ? "" : String.join(", ", supported);
+        String msg = "Request method '" + ex.getMethod() + "' is not supported" + (methods.isBlank() ? "" : ". Supported: " + methods);
+        var resp = build(HttpStatus.METHOD_NOT_ALLOWED, msg, request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(resp);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)

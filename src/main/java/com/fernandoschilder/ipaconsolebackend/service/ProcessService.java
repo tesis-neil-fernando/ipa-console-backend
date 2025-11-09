@@ -266,6 +266,23 @@ public class ProcessService {
         return enrichWithLastExecution(base);
     }
 
+    @Transactional
+    public ResponseEntity<?> deleteParameter(Long processId, Long parameterId) {
+        var process = processRepository.findById(processId)
+                .orElseThrow(() -> new EntityNotFoundException("Process not found: " + processId));
+
+        var param = process.getParameters().stream()
+                .filter(p -> p.getId() != null && p.getId().equals(parameterId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Parameter not found on process: " + parameterId));
+
+        // remove from the collection; orphanRemoval = true on the relationship will delete it
+        process.removeParameter(param);
+        processRepository.save(process);
+
+        return ResponseEntity.noContent().build();
+    }
+
     private ProcessResponseDto enrichWithLastExecution(ProcessResponseDto dto) {
         if (dto == null || dto.workflow() == null || dto.workflow().id() == null) return dto;
         var last = fetchLastExecution(dto.workflow().id());
