@@ -44,6 +44,9 @@ public class SecurityConfiguration {
     @Value("${fernandoschilder.app.front-url}")
     private String frontUrl;
 
+    @Value("${fernandoschilder.app.internal-token:}")
+    private String internalToken;
+
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
         return new AuthTokenFilter();
@@ -73,20 +76,29 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(
-                        auth -> auth.requestMatchers(WHITE_LIST_URL)
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated())
+        .authorizeHttpRequests(auth -> auth
+            // public / swagger / auth endpoints
+            .requestMatchers(WHITE_LIST_URL).permitAll()
+            // internal endpoints must have ROLE_INTERNAL
+            .requestMatchers("/internal/**").hasRole("INTERNAL")
+            // everything else must be authenticated by JWT or other auth providers
+            .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(unauthorizedHandler) // 401
                         .accessDeniedHandler(accessDeniedHandler)      // 403  ← usa el bean
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        // add internal token filter first so it can authenticate internal callers
+        .addFilterBefore(internalTokenFilter(), UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public InternalTokenFilter internalTokenFilter() {
+    return new InternalTokenFilter(internalToken);
     }
 
     @Bean
