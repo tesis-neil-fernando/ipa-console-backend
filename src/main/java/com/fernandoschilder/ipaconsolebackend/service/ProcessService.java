@@ -283,6 +283,19 @@ public class ProcessService {
         return ResponseEntity.noContent().build();
     }
 
+    @Transactional(readOnly = true)
+    public java.util.Map<String, String> getParametersByWorkflowId(String workflowId) {
+        var processOpt = processRepository.findByWorkflow_Id(workflowId);
+        var process = processOpt.orElseThrow(() -> new EntityNotFoundException("Process not found for workflow: " + workflowId));
+        if (process.getParameters() == null) return java.util.Map.of();
+        return process.getParameters().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        com.fernandoschilder.ipaconsolebackend.model.ParameterEntity::getName,
+                        com.fernandoschilder.ipaconsolebackend.model.ParameterEntity::getValue,
+                        (a, b) -> b
+                ));
+    }
+
     private ProcessResponseDto enrichWithLastExecution(ProcessResponseDto dto) {
         if (dto == null || dto.workflow() == null || dto.workflow().id() == null) return dto;
         var last = fetchLastExecution(dto.workflow().id());
