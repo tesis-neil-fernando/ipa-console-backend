@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.regex.Pattern;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.context.annotation.Lazy;
 import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
@@ -252,8 +255,12 @@ public class ProcessService {
             process.setDescription(dto.description());
         }
 
-        boolean programacionChanged = false;
-        boolean programadoChanged = false;
+    boolean programacionChanged = false;
+    boolean programadoChanged = false;
+    // Cron-like pattern: five or six space-separated fields containing digits, *, /, -, , or ?
+    // This is intentionally simple — it matches typical cron expressions and mirrors the
+    // approach used in WorkflowSyncService.extractCronForWorkflow.
+    final Pattern CRON_LIKE = Pattern.compile("([\\d\\*\\/,\\-?]+\\s+){4,5}[\\d\\*\\/,\\-?]+");
         if (dto.parameters() != null) {
             var currentParams = process.getParameters().stream().collect(java.util.stream.Collectors.toMap(ParameterEntity::getId, p -> p));
 
@@ -264,6 +271,17 @@ public class ProcessService {
                     if (pEdit.name() != null && !pEdit.name().isBlank()) pe.setName(pEdit.name());
                     if (pEdit.value() != null) pe.setValue(pEdit.value());
                     if (pEdit.type() != null && !pEdit.type().isBlank()) pe.setType(pEdit.type());
+                    // If this new parameter is the cron parameter, validate type and value
+                    if (pe.getName() != null && "Programación".equalsIgnoreCase(pe.getName())) {
+                        String t = pe.getType();
+                        String v = pe.getValue();
+                        if (t == null || !t.equalsIgnoreCase("cron")) {
+                            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parameter 'Programación' must have type 'cron'");
+                        }
+                        if (v == null || v.isBlank() || !CRON_LIKE.matcher(v.trim()).matches()) {
+                            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid cron expression for parameter 'Programación': " + v);
+                        }
+                    }
                     process.addParameter(pe);
                     if (pe.getName() != null && "Programación".equalsIgnoreCase(pe.getName())) programacionChanged = true;
                     if (pe.getName() != null && "Programado".equalsIgnoreCase(pe.getName())) programadoChanged = true;
@@ -278,6 +296,21 @@ public class ProcessService {
                 // If this existing parameter is the Programación parameter, mark change when any edit occurs
                 boolean existingIsProgramacion = existing.getName() != null && "Programación".equalsIgnoreCase(existing.getName());
                 boolean existingIsProgramado = existing.getName() != null && "Programado".equalsIgnoreCase(existing.getName());
+
+                // Compute the prospective new values (if the edit is applied) so we can validate
+                String prospectiveName = (pEdit.name() != null && !pEdit.name().isBlank()) ? pEdit.name() : existing.getName();
+                String prospectiveType = (pEdit.type() != null && !pEdit.type().isBlank()) ? pEdit.type() : existing.getType();
+                String prospectiveValue = (pEdit.value() != null) ? pEdit.value() : existing.getValue();
+
+                // If the parameter will be or remain Programación, validate type and cron value before applying changes
+                if (prospectiveName != null && "Programación".equalsIgnoreCase(prospectiveName)) {
+                    if (prospectiveType == null || !prospectiveType.equalsIgnoreCase("cron")) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parameter 'Programación' must have type 'cron'");
+                    }
+                    if (prospectiveValue == null || prospectiveValue.isBlank() || !CRON_LIKE.matcher(prospectiveValue.trim()).matches()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid cron expression for parameter 'Programación': " + prospectiveValue);
+                    }
+                }
 
                 if (pEdit.name() != null && !pEdit.name().isBlank()) {
                     // renaming could add or remove Programación
