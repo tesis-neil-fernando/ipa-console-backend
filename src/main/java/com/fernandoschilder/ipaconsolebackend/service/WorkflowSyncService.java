@@ -11,6 +11,8 @@ import jakarta.transaction.Transactional;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,13 +22,15 @@ public class WorkflowSyncService {
     private final WorkflowRepository workflowRepository;
     private final TagRepository tagRepository;
     private final ProcessService processService; // <-- NUEVO
+    private final WorkflowSchedulerService workflowSchedulerService;
     private final ObjectMapper objectMapper;
 
-    public WorkflowSyncService(N8nApiService n8nService, WorkflowRepository workflowRepository, TagRepository tagRepository, ProcessService processService, ObjectMapper objectMapper) {
+    public WorkflowSyncService(N8nApiService n8nService, WorkflowRepository workflowRepository, TagRepository tagRepository, ProcessService processService, WorkflowSchedulerService workflowSchedulerService, ObjectMapper objectMapper) {
         this.n8nService = n8nService;
         this.workflowRepository = workflowRepository;
         this.tagRepository = tagRepository;
         this.processService = processService;
+        this.workflowSchedulerService = workflowSchedulerService;
         this.objectMapper = objectMapper;
     }
 
@@ -106,6 +110,14 @@ public class WorkflowSyncService {
                 }
             }
 
+                // Refresh in-memory schedules after sync so newly-created or updated processes
+                // with Programación are picked up immediately.
+                try {
+                    workflowSchedulerService.refreshSchedules();
+                } catch (Exception ignored) {
+                    // non-fatal, scheduling refresh should not break sync
+                }
+
             return new SyncSummary(entities.size(), toCreate, toUpdate);
 
         } catch (N8nClientException e) {
@@ -137,4 +149,44 @@ public class WorkflowSyncService {
     }
 
     public static record SyncSummary(int total, int created, int updated) {}
+
+    /**
+     * Try to extract a cron expression for a workflow.
+     * Strategy:
+     *  - look for tags whose name contains a cron like "cron=..." or "cron:..."
+     *  - look into workflow name for "cron:..."
+     *  - fallback: search rawJson for a cron-like pattern (5 or 6 space-separated fields)
+     */
+    private String extractCronForWorkflow(WorkflowEntity wf) {
+        if (wf == null) return null;
+
+        if (wf.getTags() != null) {
+            for (var t : wf.getTags()) {
+                if (t == null || t.getName() == null) continue;
+                String tn = t.getName().trim();
+                if (tn.toLowerCase().startsWith("cron=")) return tn.substring(5).trim();
+                if (tn.toLowerCase().startsWith("cron:")) return tn.substring(5).trim();
+            }
+        }
+
+        if (wf.getName() != null) {
+            String n = wf.getName();
+            int idx = n.toLowerCase().indexOf("cron:");
+            if (idx >= 0) {
+                return n.substring(idx + 5).trim();
+            }
+        }
+
+        String raw = wf.getRawJson();
+        if (raw != null) {
+            // crude cron-like regex: five or six space-separated fields containing digits, *, /, -, , or ?
+            Pattern p = Pattern.compile("([\\d\\*\\/,\\-?]+\\s+){4,5}[\\d\\*\\/,\\-?]+");
+            Matcher m = p.matcher(raw);
+            if (m.find()) {
+                return m.group().trim();
+            }
+        }
+
+        return null;
+    }
 }

@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.context.annotation.Lazy;
 import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
 
 @Service
@@ -32,14 +33,16 @@ public class ProcessService {
     private final N8nApiService n8nApiService;
     private final N8nWebhookService n8nWebhookService;
     private final ProcessMapper processMapper;
+    private final WorkflowSchedulerService workflowSchedulerService;
 
-    public ProcessService(ProcessRepository processRepository, WorkflowRepository workflowRepository, UserRepository userRepository, N8nApiService n8nApiService, N8nWebhookService n8nWebhookService, ObjectMapper objectMapper, ProcessMapper processMapper) {
+    public ProcessService(ProcessRepository processRepository, WorkflowRepository workflowRepository, UserRepository userRepository, N8nApiService n8nApiService, N8nWebhookService n8nWebhookService, ObjectMapper objectMapper, ProcessMapper processMapper, @Lazy WorkflowSchedulerService workflowSchedulerService) {
         this.processRepository = processRepository;
         this.workflowRepository = workflowRepository;
         this.userRepository = userRepository;
         this.n8nApiService = n8nApiService;
         this.n8nWebhookService = n8nWebhookService;
         this.processMapper = processMapper;
+        this.workflowSchedulerService = workflowSchedulerService;
     }
 
     @Transactional
@@ -52,6 +55,28 @@ public class ProcessService {
         p.setDescription(description);
         p.setWorkflow(workflow);
         workflow.setProcess(p);
+        // If the workflow has a tag named "scheduled", create parameter:
+        // - "Programación" of type "cron" with default value "0 * * * * *"
+        // Value is stored as string; the `type` field contains the literal type name.
+        try {
+            boolean scheduled = workflow.getTags() != null && workflow.getTags().stream()
+                    .anyMatch(t -> t != null && "scheduled".equalsIgnoreCase(t.getName()));
+            if (scheduled) {
+                var pCron = new ParameterEntity();
+                pCron.setName("Programación");
+                pCron.setValue("0 * * * * *");
+                pCron.setType("cron");
+                p.addParameter(pCron);
+                // add an explicit enabled flag parameter (starts as false)
+                var pEnabled = new ParameterEntity();
+                pEnabled.setName("Programado");
+                pEnabled.setValue("false");
+                pEnabled.setType("boolean");
+                p.addParameter(pEnabled);
+            }
+        } catch (Exception ex) {
+            // Defensive: don't fail sync if tags are unexpectedly null or invalid.
+        }
         return processRepository.saveAndFlush(p);
     }
 
@@ -227,6 +252,8 @@ public class ProcessService {
             process.setDescription(dto.description());
         }
 
+        boolean programacionChanged = false;
+        boolean programadoChanged = false;
         if (dto.parameters() != null) {
             var currentParams = process.getParameters().stream().collect(java.util.stream.Collectors.toMap(ParameterEntity::getId, p -> p));
 
@@ -238,6 +265,8 @@ public class ProcessService {
                     if (pEdit.value() != null) pe.setValue(pEdit.value());
                     if (pEdit.type() != null && !pEdit.type().isBlank()) pe.setType(pEdit.type());
                     process.addParameter(pe);
+                    if (pe.getName() != null && "Programación".equalsIgnoreCase(pe.getName())) programacionChanged = true;
+                    if (pe.getName() != null && "Programado".equalsIgnoreCase(pe.getName())) programadoChanged = true;
                     continue;
                 }
 
@@ -246,13 +275,26 @@ public class ProcessService {
                     throw new EntityNotFoundException("Parameter " + pEdit.id() + " not found on process " + processId);
                 }
 
+                // If this existing parameter is the Programación parameter, mark change when any edit occurs
+                boolean existingIsProgramacion = existing.getName() != null && "Programación".equalsIgnoreCase(existing.getName());
+                boolean existingIsProgramado = existing.getName() != null && "Programado".equalsIgnoreCase(existing.getName());
+
                 if (pEdit.name() != null && !pEdit.name().isBlank()) {
+                    // renaming could add or remove Programación
+                    if (!existingIsProgramacion && "Programación".equalsIgnoreCase(pEdit.name())) programacionChanged = true;
+                    if (existingIsProgramacion && !"Programación".equalsIgnoreCase(pEdit.name())) programacionChanged = true;
+                    if (!existingIsProgramado && "Programado".equalsIgnoreCase(pEdit.name())) programadoChanged = true;
+                    if (existingIsProgramado && !"Programado".equalsIgnoreCase(pEdit.name())) programadoChanged = true;
                     existing.setName(pEdit.name());
                 }
                 if (pEdit.value() != null) {
+                    if (existingIsProgramacion && !pEdit.value().equals(existing.getValue())) programacionChanged = true;
+                    if (existingIsProgramado && !pEdit.value().equals(existing.getValue())) programadoChanged = true;
                     existing.setValue(pEdit.value());
                 }
                 if (pEdit.type() != null && !pEdit.type().isBlank()) {
+                    if (existingIsProgramacion && !pEdit.type().equals(existing.getType())) programacionChanged = true;
+                    if (existingIsProgramado && !pEdit.type().equals(existing.getType())) programadoChanged = true;
                     existing.setType(pEdit.type());
                 }
             }
@@ -260,9 +302,19 @@ public class ProcessService {
 
         var saved = processRepository.save(process);
 
+        // If Programación or Programado parameter changed, refresh schedules
+        try {
+            if (programacionChanged || programadoChanged) {
+                workflowSchedulerService.refreshSchedules();
+            }
+        } catch (Exception ex) {
+            // non-fatal: log and continue
+            // keep method simple (logger not available here); swallowing intentionally
+        }
+
         var reloaded = processRepository.findById(saved.getId()).orElseThrow(() -> new EntityNotFoundException("Process not found after update: " + saved.getId()));
 
-    var base = processMapper.toResponseDto(reloaded);
+        var base = processMapper.toResponseDto(reloaded);
         return enrichWithLastExecution(base);
     }
 
