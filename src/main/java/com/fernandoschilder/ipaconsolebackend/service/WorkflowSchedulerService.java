@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,24 @@ public class WorkflowSchedulerService {
         scheduler.setPoolSize(4);
         scheduler.setThreadNamePrefix("wf-scheduler-");
         scheduler.initialize();
+        log.info("WorkflowSchedulerService initializing: starting task scheduler and refreshing schedules");
         // Initialize schedules on startup
-        refreshSchedules();
+        try {
+            refreshSchedules();
+        } catch (Exception ex) {
+            log.warn("Initial refreshSchedules() failed: {}", ex.getMessage());
+        }
+    }
+
+    @Scheduled(fixedDelayString = "${scheduler.refresh.ms:60000}", initialDelayString = "${scheduler.initialDelay.ms:5000}")
+    @Transactional
+    public void periodicRefresh() {
+        log.debug("Periodic refresh triggered");
+        try {
+            refreshSchedules();
+        } catch (Exception ex) {
+            log.warn("Periodic refreshSchedules() failed: {}", ex.getMessage());
+        }
     }
 
     @PreDestroy
@@ -70,11 +87,14 @@ public class WorkflowSchedulerService {
      */
     @Transactional
     public synchronized void refreshSchedules() {
+        log.info("Refreshing schedules: fetching processes with tag 'scheduled'");
         List<ProcessEntity> candidates = processRepository.findDistinctByWorkflow_Tags_NameIn(List.of("scheduled"));
+        log.info("Found {} candidate processes for scheduling", candidates == null ? 0 : candidates.size());
         Set<Long> toKeep = new HashSet<>();
 
         for (ProcessEntity p : candidates) {
             if (p == null || p.getId() == null) continue;
+            log.debug("Evaluating process id={} name={}", p.getId(), p.getName());
             // Ensure default parameters exist on startup/update: Programación (cron) and Programado (enabled flag)
             boolean hasCron = false;
             boolean hasEnabled = false;
@@ -92,6 +112,7 @@ public class WorkflowSchedulerService {
                 pCron.setValue("0 * * * * *");
                 pCron.setType("cron");
                 p.addParameter(pCron);
+                log.info("Process {} missing 'Programación' param: creating default '0 * * * * *'", p.getId());
                 needSave = true;
             }
             if (!hasEnabled) {
@@ -100,11 +121,13 @@ public class WorkflowSchedulerService {
                 pEnabled.setValue("false");
                 pEnabled.setType("boolean");
                 p.addParameter(pEnabled);
+                log.info("Process {} missing 'Programado' param: creating default 'false'", p.getId());
                 needSave = true;
             }
             if (needSave) {
                 try {
                     processRepository.save(p);
+                    log.info("Persisted default scheduling parameters for process {}", p.getId());
                 } catch (Exception ex) {
                     log.warn("Failed to persist default scheduling parameters for process {}: {}", p.getId(), ex.getMessage());
                 }
@@ -112,6 +135,7 @@ public class WorkflowSchedulerService {
             // Only schedule if the explicit enabled flag is present and true
             boolean enabled = isSchedulingEnabled(p);
             if (!enabled) {
+                log.debug("Scheduling disabled for process {} (Programado != true). Cancelling if scheduled.", p.getId());
                 cancelIfScheduled(p.getId());
                 continue;
             }
@@ -119,6 +143,7 @@ public class WorkflowSchedulerService {
             String cron = extractCron(p);
             if (cron == null || cron.isBlank()) {
                 // No cron -> ensure it's not scheduled anymore
+                log.debug("No valid cron for process {} (Programación blank or disabled). Cancelling if scheduled.", p.getId());
                 cancelIfScheduled(p.getId());
                 continue;
             }
@@ -138,7 +163,7 @@ public class WorkflowSchedulerService {
                         log.info("Scheduled process {} with cron '{}'", p.getId(), cron);
                     }
                 } catch (IllegalArgumentException iae) {
-                    log.warn("Invalid cron '{}' for process {}. Skipping schedule.", cron, p.getId());
+                    log.warn("Invalid cron '{}' for process {}. Skipping schedule. Reason: {}", cron, p.getId(), iae.getMessage());
                 } catch (Exception ex) {
                     log.warn("Failed to schedule process {}: {}", p.getId(), ex.getMessage());
                 }
@@ -152,6 +177,7 @@ public class WorkflowSchedulerService {
                 cancelIfScheduled(pid);
             }
         }
+        log.info("refreshSchedules complete: {} active scheduled tasks", scheduledTasks.size());
     }
 
     private String extractCron(ProcessEntity p) {
