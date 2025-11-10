@@ -54,20 +54,6 @@ public class ProcessController {
         return ResponseEntity.ok(processService.listForCurrentUser(tags, active, archived, "view"));
     }
 
-    /**
-     * List processes visible to the current authenticated user, scoped by namespaces where the
-     * user has the given permission (default: "view").
-     */
-    @GetMapping("/me")
-    public ResponseEntity<List<ProcessResponseDto>> listForCurrentUser(
-            @RequestParam(required = false) String tags,
-            @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) Boolean archived,
-            @RequestParam(required = false, defaultValue = "view") String permissionType
-    ) {
-        return ResponseEntity.ok(processService.listForCurrentUser(tags, active, archived, permissionType));
-    }
-
     @PostMapping("/{id}/start")
     @org.springframework.security.access.prepost.PreAuthorize("@rbacSecurity.canExecuteProcess(authentication.name, #id)")
     public ResponseEntity<?> start(@PathVariable Long id) {
