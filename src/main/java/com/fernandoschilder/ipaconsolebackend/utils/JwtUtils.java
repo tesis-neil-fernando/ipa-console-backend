@@ -4,8 +4,10 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import com.fernandoschilder.ipaconsolebackend.security.UserDetailsImpl;
+import com.fernandoschilder.ipaconsolebackend.service.SessionService;
 import org.springframework.security.core.GrantedAuthority;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -28,23 +30,32 @@ public class JwtUtils {
     @Value("${fernandoschilder.app.jwtExpirationMs}")
     private int jwtExpirationMs;
 
+    private final SessionService sessionService;
+
+    public JwtUtils(SessionService sessionService) {
+        this.sessionService = sessionService;
+    }
+
     public String generateJwtToken(Authentication authentication) {
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
         Algorithm algorithm = getAlgorithm();
         Date now = new Date();
         Date exp = new Date(now.getTime() + jwtExpirationMs);
-    // collect authorities as simple strings
-    String[] roles = userPrincipal.getAuthorities().stream()
-        .map(GrantedAuthority::getAuthority)
-        .toArray(String[]::new);
+        // collect authorities as simple strings
+        String[] roles = userPrincipal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toArray(String[]::new);
 
-    return JWT.create()
-        .withSubject(userPrincipal.getUsername())
-        .withClaim("id", userPrincipal.getId())
-        .withArrayClaim("roles", roles)
-        .withIssuedAt(now)
-        .withExpiresAt(exp)
-        .sign(algorithm);
+        String jti = UUID.randomUUID().toString();
+
+        return JWT.create()
+                .withJWTId(jti)
+                .withSubject(userPrincipal.getUsername())
+                .withClaim("id", userPrincipal.getId())
+                .withArrayClaim("roles", roles)
+                .withIssuedAt(now)
+                .withExpiresAt(exp)
+                .sign(algorithm);
     }
 
     private Algorithm getAlgorithm() {
@@ -93,15 +104,53 @@ public class JwtUtils {
         }
     }
 
+    public String getJtiFromJwtToken(String token) {
+        try {
+            JWTVerifier verifier = JWT.require(getAlgorithm()).build();
+            DecodedJWT jwt = verifier.verify(token);
+            return jwt.getId();
+        } catch (Exception e) {
+            logger.error("Failed to parse JWT and extract jti: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    public Date getIssuedAtFromJwtToken(String token) {
+        try {
+            JWTVerifier verifier = JWT.require(getAlgorithm()).build();
+            DecodedJWT jwt = verifier.verify(token);
+            return jwt.getIssuedAt();
+        } catch (Exception e) {
+            logger.error("Failed to parse JWT and extract issuedAt: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    public Date getExpiresAtFromJwtToken(String token) {
+        try {
+            JWTVerifier verifier = JWT.require(getAlgorithm()).build();
+            DecodedJWT jwt = verifier.verify(token);
+            return jwt.getExpiresAt();
+        } catch (Exception e) {
+            logger.error("Failed to parse JWT and extract expiresAt: {}", e.getMessage());
+            return null;
+        }
+    }
+
     public boolean validateJwtToken(String authToken) {
         try {
             JWTVerifier verifier = JWT.require(getAlgorithm()).build();
-            verifier.verify(authToken);
-            return true;
+            DecodedJWT jwt = verifier.verify(authToken);
+            // if signature/exp ok, check server session state (jti)
+            String jti = jwt.getId();
+            if (jti == null) return false;
+            return sessionService.isActive(jti);
         } catch (JWTVerificationException e) {
             logger.error("Invalid JWT token: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             logger.error("JWT claims string is empty: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error validating JWT: {}", e.getMessage());
         }
         return false;
     }
