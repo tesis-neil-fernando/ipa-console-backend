@@ -1,16 +1,16 @@
 package com.fernandoschilder.ipaconsolebackend.dto.rbac;
 
-import java.util.List;
-
 public class PermissionRbacDto {
     private Long id;
-    private String type;
-    private List<NamespaceRefDto> namespaces;
+    // action: one of "view", "exec", "edit"
+    private String action;
+    // namespace (null for global)
+    private NamespaceRefDto namespace;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-    public List<NamespaceRefDto> getNamespaces() { return namespaces; }
-    public void setNamespaces(List<NamespaceRefDto> namespaces) { this.namespaces = namespaces; }
+    public String getAction() { return action; }
+    public void setAction(String action) { this.action = action; }
+    public NamespaceRefDto getNamespace() { return namespace; }
+    public void setNamespace(NamespaceRefDto namespace) { this.namespace = namespace; }
 }

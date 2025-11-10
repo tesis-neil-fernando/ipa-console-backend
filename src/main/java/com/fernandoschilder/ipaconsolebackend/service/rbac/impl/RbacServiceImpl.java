@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import com.fernandoschilder.ipaconsolebackend.model.PermissionAction;
 import java.security.SecureRandom;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.stream.Collectors;
@@ -39,18 +40,17 @@ public class RbacServiceImpl implements RbacService {
     @Override
     public NamespaceRbacDto createNamespace(String name) {
         if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("namespace name required");
+        if ("ROOT".equalsIgnoreCase(name)) throw new IllegalArgumentException("namespace name 'ROOT' is reserved");
         if (namespaceRepository.existsByName(name)) throw new IllegalArgumentException("namespace already exists");
 
         NamespaceEntity ns = new NamespaceEntity(name);
         ns = namespaceRepository.save(ns);
 
-        List<String> perms = Arrays.asList("view", "exec", "edit");
-        for (String p : perms) {
-            String type = name + ":" + p;
-            if (permissionRepository.existsByType(type)) continue;
-            PermissionEntity perm = new PermissionEntity(type);
+        // create standard permissions for the namespace (VIEW, EXEC, EDIT)
+        for (PermissionAction a : PermissionAction.values()) {
+            if (permissionRepository.existsByNamespaceAndAction(ns, a)) continue;
+            PermissionEntity perm = new PermissionEntity(a, ns);
             // link both sides
-            perm.getNamespaces().add(ns);
             ns.getPermissions().add(perm);
             permissionRepository.save(perm);
         }
@@ -79,6 +79,8 @@ public class RbacServiceImpl implements RbacService {
     @Override
     public RoleRbacDto createRole(String name) {
         if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("role name required");
+        // reserve ADMIN role name - it is created by bootstrap and should not be created manually
+        if ("ADMIN".equalsIgnoreCase(name)) throw new IllegalArgumentException("role name 'ADMIN' is reserved");
         if (roleRepository.existsByName(name)) throw new IllegalArgumentException("role already exists");
         RoleEntity r = new RoleEntity(name);
         r = roleRepository.save(r);
@@ -116,11 +118,11 @@ public class RbacServiceImpl implements RbacService {
     @Override
     public void updateUserEnabled(Long userId, boolean enabled) {
         if (userId == null) throw new IllegalArgumentException("user id required");
-        // Prevent changing the enabled state of the system user (id == 1)
-        if (Objects.equals(userId, 1L)) {
-            throw new IllegalStateException("cannot change enabled state of system user");
-        }
+        // Prevent disabling the bootstrap administrator account (username 'administrator').
         UserEntity u = userRepository.findById(userId).orElseThrow(() -> new NoSuchElementException("user not found"));
+        if (u.getUsername() != null && "administrator".equalsIgnoreCase(u.getUsername()) && !enabled) {
+            throw new IllegalStateException("bootstrap administrator account cannot be disabled");
+        }
         u.setEnabled(enabled);
         userRepository.save(u);
     }
@@ -128,6 +130,9 @@ public class RbacServiceImpl implements RbacService {
     @Override
     public void assignPermissionToRole(Long roleId, Long permissionId) {
         RoleEntity role = roleRepository.findById(roleId).orElseThrow(() -> new NoSuchElementException("role not found"));
+        if (role.getName() != null && "ADMIN".equalsIgnoreCase(role.getName())) {
+            throw new IllegalStateException("ADMIN role is immutable; permissions may not be modified");
+        }
         PermissionEntity perm = permissionRepository.findById(permissionId).orElseThrow(() -> new NoSuchElementException("permission not found"));
         role.addPermission(perm);
         roleRepository.save(role);
@@ -136,6 +141,9 @@ public class RbacServiceImpl implements RbacService {
     @Override
     public void removePermissionFromRole(Long roleId, Long permissionId) {
         RoleEntity role = roleRepository.findById(roleId).orElseThrow(() -> new NoSuchElementException("role not found"));
+        if (role.getName() != null && "ADMIN".equalsIgnoreCase(role.getName())) {
+            throw new IllegalStateException("ADMIN role is immutable; permissions may not be modified");
+        }
         PermissionEntity perm = permissionRepository.findById(permissionId).orElseThrow(() -> new NoSuchElementException("permission not found"));
         role.removePermission(perm);
         roleRepository.save(role);
@@ -153,6 +161,13 @@ public class RbacServiceImpl implements RbacService {
     public void removeRoleFromUser(Long userId, Long roleId) {
         UserEntity user = userRepository.findById(userId).orElseThrow(() -> new NoSuchElementException("user not found"));
         RoleEntity role = roleRepository.findById(roleId).orElseThrow(() -> new NoSuchElementException("role not found"));
+        // Prevent removing the ADMIN role from the bootstrap administrator account only
+        if (role.getName() != null && "ADMIN".equalsIgnoreCase(role.getName())) {
+            if (user.getUsername() != null && "administrator".equalsIgnoreCase(user.getUsername())) {
+                throw new IllegalStateException("ADMIN role assignment cannot be removed from the bootstrap administrator user");
+            }
+            // allow removing ADMIN from other users
+        }
         user.removeRole(role);
         userRepository.save(user);
     }
@@ -182,7 +197,16 @@ public class RbacServiceImpl implements RbacService {
 
     @Override
     public List<RoleRbacDto> listRoles() {
-        return roleRepository.findAll().stream().map(this::toRoleDto).collect(Collectors.toList());
+        // Return all roles, but for the ADMIN role remove permissions from the DTO so its permissions are not exposed.
+        return roleRepository.findAll().stream()
+                .map(r -> {
+                    RoleRbacDto dto = toRoleDto(r);
+                    if (r.getName() != null && "ADMIN".equalsIgnoreCase(r.getName())) {
+                        dto.setPermissions(Collections.emptyList());
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -227,6 +251,7 @@ public class RbacServiceImpl implements RbacService {
     public void updateNamespaceName(Long namespaceId, String name) {
         if (namespaceId == null) throw new IllegalArgumentException("namespace id required");
         if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("namespace name required");
+        if ("ROOT".equalsIgnoreCase(name)) throw new IllegalArgumentException("namespace name 'ROOT' is reserved");
         NamespaceEntity ns = namespaceRepository.findById(namespaceId).orElseThrow(() -> new NoSuchElementException("namespace not found"));
         // if same name, nothing to do
         if (Objects.equals(ns.getName(), name)) return;
@@ -235,21 +260,7 @@ public class RbacServiceImpl implements RbacService {
             if (!Objects.equals(existing.getId(), ns.getId())) throw new IllegalArgumentException("namespace already exists");
         });
 
-        // update permission types which follow the pattern "<namespace>:<perm>"
-        if (ns.getPermissions() != null) {
-            for (PermissionEntity p : ns.getPermissions()) {
-                String oldType = p.getType();
-                int idx = oldType.indexOf(':');
-                String suffix = (idx >= 0) ? oldType.substring(idx + 1) : oldType;
-                String newType = name + ":" + suffix;
-                // check for conflicts
-                permissionRepository.findByType(newType).ifPresent(conflict -> {
-                    if (!Objects.equals(conflict.getId(), p.getId())) throw new IllegalArgumentException("permission type conflict when renaming namespace");
-                });
-                p.setType(newType);
-                permissionRepository.save(p);
-            }
-        }
+        // permissions reference the namespace by FK so renaming does not require updates to permission rows
 
         ns.setName(name);
         namespaceRepository.save(ns);
@@ -260,6 +271,13 @@ public class RbacServiceImpl implements RbacService {
         if (roleId == null) throw new IllegalArgumentException("role id required");
         if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("role name required");
         RoleEntity r = roleRepository.findById(roleId).orElseThrow(() -> new NoSuchElementException("role not found"));
+        // Prevent renaming the ADMIN role or renaming any role to 'ADMIN'
+        if (r.getName() != null && "ADMIN".equalsIgnoreCase(r.getName())) {
+            throw new IllegalStateException("ADMIN role is immutable and cannot be renamed");
+        }
+        if ("ADMIN".equalsIgnoreCase(name)) {
+            throw new IllegalArgumentException("role name 'ADMIN' is reserved");
+        }
         if (Objects.equals(r.getName(), name)) return;
         roleRepository.findByName(name).ifPresent(existing -> {
             if (!Objects.equals(existing.getId(), r.getId())) throw new IllegalArgumentException("role already exists");
@@ -291,8 +309,14 @@ public class RbacServiceImpl implements RbacService {
         }
         if (r.getPermissions() != null) {
             dto.setPermissions(r.getPermissions().stream().map(p -> {
-                PermissionRbacDto pr = new PermissionRbacDto(); pr.setId(p.getId()); pr.setType(p.getType());
-                if (p.getNamespaces() != null) pr.setNamespaces(p.getNamespaces().stream().map(ns -> { NamespaceRefDto nr = new NamespaceRefDto(); nr.setId(ns.getId()); nr.setName(ns.getName()); return nr; }).collect(Collectors.toList()));
+                PermissionRbacDto pr = new PermissionRbacDto(); pr.setId(p.getId());
+                pr.setAction(p.getAction().name().toLowerCase());
+                if (p.getNamespace() != null) {
+                    NamespaceRefDto nr = new NamespaceRefDto(); nr.setId(p.getNamespace().getId()); nr.setName(p.getNamespace().getName());
+                    pr.setNamespace(nr);
+                } else {
+                    pr.setNamespace(null);
+                }
                 return pr;
             }).collect(Collectors.toList()));
         }
@@ -304,7 +328,8 @@ public class RbacServiceImpl implements RbacService {
         dto.setId(ns.getId()); dto.setName(ns.getName());
         if (ns.getPermissions() != null) {
             dto.setPermissions(ns.getPermissions().stream().map(p -> {
-                PermissionRbacDto pr = new PermissionRbacDto(); pr.setId(p.getId()); pr.setType(p.getType());
+                PermissionRbacDto pr = new PermissionRbacDto(); pr.setId(p.getId()); pr.setAction(p.getAction().name().toLowerCase());
+                NamespaceRefDto nr = new NamespaceRefDto(); nr.setId(ns.getId()); nr.setName(ns.getName()); pr.setNamespace(nr);
                 return pr;
             }).collect(Collectors.toList()));
         }

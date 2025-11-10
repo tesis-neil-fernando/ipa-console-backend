@@ -26,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.context.annotation.Lazy;
 import com.fernandoschilder.ipaconsolebackend.repository.UserRepository;
+import com.fernandoschilder.ipaconsolebackend.model.PermissionAction;
 
 @Service
 public class ProcessService {
@@ -142,7 +143,7 @@ public class ProcessService {
         // Use the low-level throwing API so failures are surfaced as exceptions
         // and handled by the existing GlobalExceptionHandler in the controller layer.
         String response = n8nWebhookService.postWebhookRaw(workflowId, body);
-        return ResponseEntity.ok(new N8nApiService.ApiResponse<>(true, "Webhook ejecutado", response));
+        return ResponseEntity.ok(new N8nApiService.ApiResponse<>(true, "Proceso iniciado", response));
     }
 
 
@@ -208,26 +209,62 @@ public class ProcessService {
         if (auth == null || !auth.isAuthenticated()) return List.of();
 
         String username = auth.getName();
-        List<Long> allowedNamespaceIds = userRepository.findNamespaceIdsByUsernameAndPermissionType(username, permissionType);
-        if (allowedNamespaceIds == null || allowedNamespaceIds.isEmpty()) return List.of();
+        // convert permissionType string (e.g. "view") to enum
+        if (permissionType == null || permissionType.isBlank()) return List.of();
+        PermissionAction action;
+        try {
+            action = PermissionAction.valueOf(permissionType.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            // unknown permission type -> no namespaces allowed
+            return List.of();
+        }
+
+        List<Long> allowedNamespaceIds = userRepository.findNamespaceIdsByUsernameAndAction(username, action);
 
         List<ProcessEntity> procEntities;
-        if (tags == null || tags.isBlank()) {
-            procEntities = processRepository.findAllByNamespace_IdIn(allowedNamespaceIds);
-        } else {
-            var tagNames = Arrays.stream(tags.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .toList();
 
-            if (tagNames.isEmpty()) {
+        // If no namespace-specific permissions, check for a global permission (namespace == null).
+        if (allowedNamespaceIds == null || allowedNamespaceIds.isEmpty()) {
+            boolean hasGlobal = userRepository.userHasGlobalPermission(username, action);
+            if (hasGlobal) {
+                // global permission: allow all namespaces (i.e. don't filter by namespace)
+                if (tags == null || tags.isBlank()) {
+                    procEntities = processRepository.findAll();
+                } else {
+                    var tagNames = Arrays.stream(tags.split(","))
+                            .map(String::trim)
+                            .filter(s -> !s.isEmpty())
+                            .toList();
+
+                    if (tagNames.isEmpty()) {
+                        procEntities = processRepository.findAll();
+                    } else {
+                        procEntities = processRepository.findDistinctByWorkflow_Tags_NameIn(tagNames).stream().toList();
+                    }
+                }
+            } else {
+                // no permissions at all for this action
+                return List.of();
+            }
+        } else {
+            // user has namespace-scoped permissions: restrict to those namespaces
+            if (tags == null || tags.isBlank()) {
                 procEntities = processRepository.findAllByNamespace_IdIn(allowedNamespaceIds);
             } else {
-                // fetch by tags then filter by namespace id
-                var byTags = processRepository.findDistinctByWorkflow_Tags_NameIn(tagNames);
-                procEntities = byTags.stream()
-                        .filter(p -> p.getNamespace() != null && allowedNamespaceIds.contains(p.getNamespace().getId()))
+                var tagNames = Arrays.stream(tags.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
                         .toList();
+
+                if (tagNames.isEmpty()) {
+                    procEntities = processRepository.findAllByNamespace_IdIn(allowedNamespaceIds);
+                } else {
+                    // fetch by tags then filter by namespace id
+                    var byTags = processRepository.findDistinctByWorkflow_Tags_NameIn(tagNames);
+                    procEntities = byTags.stream()
+                            .filter(p -> p.getNamespace() != null && allowedNamespaceIds.contains(p.getNamespace().getId()))
+                            .toList();
+                }
             }
         }
 

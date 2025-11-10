@@ -25,7 +25,7 @@ public class NamespaceEntity {
 
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "namespaces", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "namespace", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PermissionEntity> permissions = new HashSet<>();
     @JsonIgnore
     @OneToMany(mappedBy = "namespace", fetch = FetchType.LAZY)
@@ -68,14 +68,13 @@ public class NamespaceEntity {
         if (permission == null) return;
         if (this.permissions == null) this.permissions = new HashSet<>();
         this.permissions.add(permission);
-        if (permission.getNamespaces() == null) permission.setNamespaces(new HashSet<>());
-        permission.getNamespaces().add(this);
+        permission.setNamespace(this);
     }
 
     public void removePermission(PermissionEntity permission) {
         if (permission == null) return;
         if (this.permissions != null) this.permissions.remove(permission);
-        if (permission.getNamespaces() != null) permission.getNamespaces().remove(this);
+        if (permission != null) permission.setNamespace(null);
     }
 
     public Set<ProcessEntity> getProcesses() {

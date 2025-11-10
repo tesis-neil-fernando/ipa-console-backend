@@ -26,7 +26,7 @@ public class N8nWebhookService {
     public ResponseEntity<N8nApiService.ApiResponse<String>> postWebhook(String path, Object body) {
         try {
             String response = postWebhookRaw(path, body);
-            return ResponseEntity.ok(new N8nApiService.ApiResponse<>(true, "Webhook ejecutado", response));
+            return ResponseEntity.ok(new N8nApiService.ApiResponse<>(true, "Proceso iniciado", response));
         } catch (N8nClientException e) {
             // For client exceptions originating from n8n, avoid printing full stacktrace for 4xx statuses
             if (e.getStatusCode() >= 500) {

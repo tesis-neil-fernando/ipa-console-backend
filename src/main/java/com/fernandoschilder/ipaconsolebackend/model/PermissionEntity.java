@@ -3,14 +3,13 @@ package com.fernandoschilder.ipaconsolebackend.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 @Entity
-@Table(name = "permissions")
+@Table(name = "permissions", uniqueConstraints = {@UniqueConstraint(columnNames = {"namespace_id", "action"})})
 public class PermissionEntity {
 
     @Id
@@ -18,24 +17,30 @@ public class PermissionEntity {
     @Column(name = "permission_id")
     private Long id;
 
-    @Column(name = "type", unique = true, nullable = false, length = 100)
     @NotNull
-    @Size(max = 100)
-    private String type;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "action", nullable = false, length = 20)
+    private PermissionAction action;
 
     @JsonIgnore
     @ManyToMany(mappedBy = "permissions", fetch = FetchType.LAZY)
     private Set<RoleEntity> roles = new HashSet<>();
+
     @JsonIgnore
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "permission_namespaces", joinColumns = @JoinColumn(name = "permission_id"), inverseJoinColumns = @JoinColumn(name = "namespace_id"))
-    private Set<NamespaceEntity> namespaces = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "namespace_id")
+    private NamespaceEntity namespace;
 
     public PermissionEntity() {
     }
 
-    public PermissionEntity(String type) {
-        this.type = type;
+    public PermissionEntity(PermissionAction action) {
+        this.action = action;
+    }
+
+    public PermissionEntity(PermissionAction action, NamespaceEntity namespace) {
+        this.action = action;
+        this.namespace = namespace;
     }
 
     public Long getId() {
@@ -46,12 +51,12 @@ public class PermissionEntity {
         this.id = id;
     }
 
-    public String getType() {
-        return type;
+    public PermissionAction getAction() {
+        return action;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setAction(PermissionAction action) {
+        this.action = action;
     }
 
     public Set<RoleEntity> getRoles() {
@@ -76,26 +81,12 @@ public class PermissionEntity {
         if (role.getPermissions() != null) role.getPermissions().remove(this);
     }
 
-    public Set<NamespaceEntity> getNamespaces() {
-        return namespaces;
+    public NamespaceEntity getNamespace() {
+        return namespace;
     }
 
-    public void setNamespaces(Set<NamespaceEntity> namespaces) {
-        this.namespaces = namespaces;
-    }
-
-    public void addNamespace(NamespaceEntity ns) {
-        if (ns == null) return;
-        if (this.namespaces == null) this.namespaces = new HashSet<>();
-        this.namespaces.add(ns);
-        if (ns.getPermissions() == null) ns.setPermissions(new HashSet<>());
-        ns.getPermissions().add(this);
-    }
-
-    public void removeNamespace(NamespaceEntity ns) {
-        if (ns == null) return;
-        if (this.namespaces != null) this.namespaces.remove(ns);
-        if (ns.getPermissions() != null) ns.getPermissions().remove(this);
+    public void setNamespace(NamespaceEntity namespace) {
+        this.namespace = namespace;
     }
 
     @Override

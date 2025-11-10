@@ -14,6 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/rbac")
 @Validated
+@org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ADMIN')")
 public class RbacController {
 
     private final RbacService rbacService;
