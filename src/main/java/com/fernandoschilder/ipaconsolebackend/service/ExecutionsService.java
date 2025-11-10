@@ -31,14 +31,14 @@ public class ExecutionsService {
         if (pageSize > 50) {
             pageSize = 50; // enforce maximum page size
         }
-
-        Pageable pageable = PageRequest.of(0, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        // Order by startedAt (execution time) so newest executions appear first
+        Pageable pageable = PageRequest.of(0, pageSize, Sort.by(Sort.Direction.DESC, "startedAt"));
         java.util.List<com.fernandoschilder.ipaconsolebackend.repository.ExecutionSummary> summaries;
 
         if (cursor != null) {
-            var cursorCreatedAtOpt = executionRepository.findCreatedAtByExecutionId(cursor);
-            if (cursorCreatedAtOpt.isPresent()) {
-                summaries = executionRepository.findSummariesByCreatedAtBefore(cursorCreatedAtOpt.get(), pageable);
+            var cursorStartedAtOpt = executionRepository.findStartedAtByExecutionId(cursor);
+            if (cursorStartedAtOpt.isPresent()) {
+                summaries = executionRepository.findSummariesByStartedAtBefore(cursorStartedAtOpt.get(), pageable);
             } else {
                 // Strict mode: if the cursor is not present in our table, reject the request
                 throw new IllegalArgumentException("Cursor not found: " + cursor);
