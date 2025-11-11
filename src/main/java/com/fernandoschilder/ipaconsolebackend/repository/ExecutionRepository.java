@@ -40,4 +40,8 @@ public interface ExecutionRepository extends JpaRepository<ExecutionEntity, Long
     // Resolve only the startedAt timestamp for a given execution id — avoids loading the full entity (and its LOB)
     @Query("select e.startedAt from ExecutionEntity e where e.executionId = :executionId")
     Optional<Instant> findStartedAtByExecutionId(@Param("executionId") String executionId);
+
+    // Projection-based helper: load execution summaries in a time range (avoids loading LOB/raw_json)
+    @Query("select e.executionId as executionId, e.startedAt as startedAt, e.stoppedAt as stoppedAt, e.workflowId as workflowId, e.status as status, e.finished as finished, e.createdAt as createdAt from ExecutionEntity e where e.startedAt >= :start and e.startedAt < :end order by e.startedAt desc")
+    java.util.List<ExecutionSummary> findSummariesByStartedAtBetween(@Param("start") Instant start, @Param("end") Instant end);
 }
