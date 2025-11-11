@@ -8,7 +8,9 @@ public record ExecutionResponseDto(
         String id,
         Instant startedAt,
         Instant finishedAt,
+        Long processId,
         String processName,
+        String workflowId,
         String status,
         Boolean finished
 ) {}

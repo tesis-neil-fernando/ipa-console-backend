@@ -6,7 +6,7 @@ public interface ExecutionSummary {
     String getExecutionId();
     Instant getStartedAt();
     Instant getStoppedAt();
-    String getProcessName();
+    String getWorkflowId();
     String getStatus();
     Boolean getFinished();
     Instant getCreatedAt();

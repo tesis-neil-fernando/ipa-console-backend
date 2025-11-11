@@ -1,6 +1,7 @@
 package com.fernandoschilder.ipaconsolebackend.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -20,6 +21,11 @@ public class ExecutionEntity {
     @Column(name = "workflow_id")
     private String workflowId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workflow_id", referencedColumnName = "workflow_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"process", "tags", "rawJson"})
+    private WorkflowEntity workflow;
+
     @Column(name = "status")
     private String status;
 
@@ -32,8 +38,7 @@ public class ExecutionEntity {
     @Column(name = "finished")
     private Boolean finished;
 
-    @Column(name = "process_name")
-    private String processName;
+    // process name is no longer stored on executions; it's resolved dynamically from the linked Process
 
     @Column(name = "mode")
     private String mode;
@@ -81,6 +86,15 @@ public class ExecutionEntity {
         this.workflowId = workflowId;
     }
 
+    public WorkflowEntity getWorkflow() {
+        return workflow;
+    }
+
+    public void setWorkflow(WorkflowEntity workflow) {
+        this.workflow = workflow;
+        if (workflow != null) this.workflowId = workflow.getId();
+    }
+
     public String getStatus() {
         return status;
     }
@@ -113,13 +127,7 @@ public class ExecutionEntity {
         this.finished = finished;
     }
 
-    public String getProcessName() {
-        return processName;
-    }
-
-    public void setProcessName(String processName) {
-        this.processName = processName;
-    }
+    
 
     public String getMode() {
         return mode;

@@ -95,11 +95,8 @@ public class ExecutionSyncService {
                     e.setRetrySuccessId(item.hasNonNull("retrySuccessId") ? item.get("retrySuccessId").asText() : null);
                     e.setWaitTill(parseTs(item.hasNonNull("waitTill") ? item.get("waitTill").asText() : null));
 
-                    // try to look up a local process name for convenience
-                    if (e.getWorkflowId() != null) {
-                        Optional<com.fernandoschilder.ipaconsolebackend.model.ProcessEntity> p = processRepository.findByWorkflow_Id(e.getWorkflowId());
-                        p.ifPresent(proc -> e.setProcessName(proc.getName()));
-                    }
+                    // We no longer persist processName on executions; the process name is resolved dynamically
+                    // from the Process -> Workflow relationship when listing executions.
 
                     e.setCreatedAt(Instant.now());
                     executionRepository.save(e);
