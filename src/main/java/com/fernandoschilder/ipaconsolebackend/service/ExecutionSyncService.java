@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fernandoschilder.ipaconsolebackend.model.ExecutionEntity;
 import com.fernandoschilder.ipaconsolebackend.repository.ExecutionRepository;
 import com.fernandoschilder.ipaconsolebackend.repository.ProcessRepository;
+import com.fernandoschilder.ipaconsolebackend.repository.WorkflowRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,13 +22,15 @@ public class ExecutionSyncService {
     private final N8nApiService n8nApiService;
     private final ExecutionRepository executionRepository;
     private final ProcessRepository processRepository;
+    private final WorkflowRepository workflowRepository;
     private final ObjectMapper objectMapper;
 
     public ExecutionSyncService(N8nApiService n8nApiService, ExecutionRepository executionRepository,
-                                ProcessRepository processRepository, ObjectMapper objectMapper) {
+                                ProcessRepository processRepository, WorkflowRepository workflowRepository, ObjectMapper objectMapper) {
         this.n8nApiService = n8nApiService;
         this.executionRepository = executionRepository;
         this.processRepository = processRepository;
+        this.workflowRepository = workflowRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -99,6 +102,21 @@ public class ExecutionSyncService {
                     // from the Process -> Workflow relationship when listing executions.
 
                     e.setCreatedAt(Instant.now());
+
+                    // Ensure a minimal workflow row exists before inserting the execution. Use a
+                    // fast, atomic native upsert (ON CONFLICT DO NOTHING) executed in a new
+                    // transaction to avoid deadlocks and long-held locks.
+                    String wfId = e.getWorkflowId();
+                    if (wfId != null && !wfId.isBlank()) {
+                        try {
+                            workflowRepository.insertIfNotExists(wfId, "(placeholder) " + wfId, false, false, null);
+                        } catch (Exception ex) {
+                            // non-fatal: if this fails for any reason, log and continue; the
+                            // execution insert will fail later with FK if workflow truly missing.
+                            log.debug("Failed to insert placeholder workflow {}: {}", wfId, ex.getMessage());
+                        }
+                    }
+
                     executionRepository.save(e);
                     created++;
                 }
