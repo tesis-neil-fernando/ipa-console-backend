@@ -48,6 +48,12 @@ public class WorkflowSyncService {
             // A) Build all WorkflowEntity instances
             List<WorkflowEntity> entities = new ArrayList<>();
             for (var wf : envelope.data()) {
+                // Skip archived workflows: they should not be persisted locally.
+                // Use Boolean check to avoid NPE when isArchived() is null.
+                if (Boolean.TRUE.equals(wf.isArchived())) {
+                    continue;
+                }
+
                 WorkflowEntity e = new WorkflowEntity();
                 e.setId(wf.id());
                 e.setName(wf.name());
